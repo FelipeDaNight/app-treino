@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail" data-bg-color="#121212">
+  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="70" fill="none" stroke="#FF6A00" stroke-width="14"/>
+    <path d="M65 100 L90 125 L140 75" fill="none" stroke="#FF6A00" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</template>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Inter';src:local('Inter');}
+body{margin:0;background:#121212;}
+::-webkit-scrollbar{display:none;}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+</helmet>
+<sc-if value="{{ isListScreen }}" hint-placeholder-val="{{ true }}">
+<div style="width:390px;min-height:844px;background:#121212;font-family:'Inter',sans-serif;color:#F5F5F0;margin:0 auto;position:relative;box-sizing:border-box;display:flex;flex-direction:column">
+
+  <div style="padding:28px 20px 8px 20px;display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <div style="font-size:14px;color:#8A8A8A;font-weight:500;letter-spacing:0.02em">Escolha seu treino</div>
+      <div style="font-size:28px;font-weight:800;letter-spacing:-0.01em;margin-top:2px">Meus treinos</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <div onClick="{{ goToAdmin }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:pointer">⚙️</div>
+      <div onClick="{{ goToCalendar }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:pointer">📅</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;padding:20px;flex:1">
+    <sc-for list="{{ workouts }}" as="w" hint-placeholder-count="4">
+      <div onClick="{{ w.onClick }}" style="background:#1C1C1C;border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;border:1px solid #2A2A2A;cursor:pointer">
+        <div style="font-size:17px;line-height:1.4;font-weight:700;color:#F5F5F0">{{ w.name }}</div>
+        <div style="font-size:13px;line-height:1.3;color:#9A9A9A;font-weight:500">{{ w.category }}</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:4px">
+          <div style="font-size:13px;color:#8A8A8A;font-weight:500">{{ w.meta }}</div>
+          <div style="width:4px;height:4px;border-radius:50%;background:#3A3A3A"></div>
+          <div style="font-size:13px;color:#8A8A8A;font-weight:500">~{{ w.duration }} min</div>
+          <div style="width:4px;height:4px;border-radius:50%;background:#3A3A3A"></div>
+          <div style="font-size:13px;color:#8A8A8A;font-weight:500">{{ w.lastDone }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:sticky;bottom:0;background:linear-gradient(to top,#121212 60%,transparent);padding:24px 20px 28px 20px;display:flex;justify-content:center">
+    <button onClick="{{ goToCreate }}" style="background:#FF7A30;color:#121212;border:none;border-radius:100px;padding:16px 28px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(255,122,48,0.35);width:100%;justify-content:center;font-family:'Inter',sans-serif">
+      <span style="font-size:20px;line-height:1">+</span> Novo treino
+    </button>
+  </div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isCreateScreen }}" hint-placeholder-val="{{ false }}">
+<div style="width:390px;min-height:844px;background:#121212;font-family:'Inter',sans-serif;color:#F5F5F0;margin:0 auto;position:relative;box-sizing:border-box;display:flex;flex-direction:column">
+
+  <div style="padding:24px 20px 8px 20px;display:flex;align-items:center;gap:14px">
+    <div onClick="{{ goToList }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:19px;color:#F5F5F0;flex-shrink:0;cursor:pointer">←</div>
+    <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em">Novo treino</div>
+  </div>
+
+  <div style="padding:20px;display:flex;flex-direction:column;gap:22px;flex:1">
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Nome do treino</div>
+      <input value="Treino A - Peito e Tríceps" style="background:#1C1C1C;border:1px solid #2A2A2A;border-radius:14px;padding:16px;font-size:16px;font-weight:600;color:#F5F5F0;font-family:'Inter',sans-serif;min-height:44px;box-sizing:border-box" />
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Categoria</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+          <div style="{{ c.style }}" onClick="{{ c.onClick }}">{{ c.name }}</div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;color:#9A9A9A;font-weight:600">Exercícios</div>
+        <div style="font-size:13px;color:#8A8A8A;font-weight:500">{{ exerciseCount }} adicionados</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ exercises }}" as="ex" hint-placeholder-count="4">
+          <div style="background:#1C1C1C;border-radius:18px;padding:14px;display:flex;gap:12px;border:1px solid #2A2A2A;align-items:center">
+            <image-slot id="{{ ex.slotId }}" shape="rounded" radius="12" placeholder="Foto" style="width:56px;height:56px;flex-shrink:0"></image-slot>
+            <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:700;color:#F5F5F0;line-height:1.3">{{ ex.name }}</div>
+              <div style="font-size:13px;color:#9A9A9A;font-weight:500">{{ ex.sets }}x{{ ex.reps }} · {{ ex.load }} kg</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+              <button style="{{ ex.upStyle }}" onClick="{{ ex.onUp }}">▲</button>
+              <button style="{{ ex.downStyle }}" onClick="{{ ex.onDown }}">▼</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <button style="background:transparent;border:1.5px dashed #3A3A3A;color:#FF7A30;border-radius:16px;padding:16px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif">
+        <span style="font-size:18px;line-height:1">+</span> Adicionar exercício
+      </button>
+    </div>
+
+  </div>
+
+  <div style="position:sticky;bottom:0;background:linear-gradient(to top,#121212 60%,transparent);padding:24px 20px 28px 20px">
+    <button onClick="{{ goToList }}" style="background:#FF7A30;color:#121212;border:none;border-radius:100px;padding:16px 28px;font-size:16px;font-weight:700;width:100%;font-family:'Inter',sans-serif;box-shadow:0 8px 24px rgba(255,122,48,0.35)">
+      Salvar treino
+    </button>
+  </div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isExecutionScreen }}" hint-placeholder-val="{{ false }}">
+<div style="width:390px;min-height:844px;background:#121212;font-family:'Inter',sans-serif;color:#F5F5F0;margin:0 auto;position:relative;box-sizing:border-box;display:flex;flex-direction:column">
+
+  <div style="padding:24px 20px 8px 20px;display:flex;align-items:center;gap:14px">
+    <div onClick="{{ goToList }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:19px;color:#F5F5F0;flex-shrink:0;cursor:pointer">←</div>
+    <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em">{{ selectedWorkoutName }}</div>
+  </div>
+
+  <div style="padding:0 20px 20px 20px;display:flex;flex-direction:column;gap:18px;flex:1">
+
+    <div style="background:#1C1C1C;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;border:1px solid #2A2A2A">
+      <div style="font-size:12px;color:#8A8A8A;font-weight:600">Último treino desse tipo</div>
+      <div style="font-size:14px;color:#F5F5F0;font-weight:600">{{ executionLastDate }}</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Escolha os exercícios de hoje</div>
+      <div style="font-size:13px;color:#8A8A8A;font-weight:500">{{ selectedCount }} selecionados</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ executionItems }}" as="it" hint-placeholder-count="5">
+        <div style="{{ it.cardStyle }}">
+          <div onClick="{{ it.onToggle }}" style="display:flex;gap:12px;align-items:center;padding:14px;cursor:pointer">
+            <image-slot id="{{ it.slotId }}" shape="rounded" radius="12" placeholder="Foto" style="width:52px;height:52px;flex-shrink:0"></image-slot>
+            <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:700;color:#F5F5F0;line-height:1.3">{{ it.name }}</div>
+              <div style="font-size:12px;color:#8A8A8A;font-weight:500">{{ it.lastInfo }}</div>
+            </div>
+            <div style="{{ it.checkStyle }}">✓</div>
+          </div>
+          <sc-if value="{{ it.selected }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;padding:2px 14px 16px 14px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="font-size:12px;color:#8A8A8A;font-weight:600">Peso usado (kg)</div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <button onClick="{{ it.onWeightDown }}" style="width:44px;height:44px;border-radius:12px;background:#121212;border:1px solid #3A3A3A;color:#F5F5F0;font-size:20px;font-weight:700;flex-shrink:0">−</button>
+                  <div style="flex:1;text-align:center;font-size:20px;font-weight:800;color:#F5F5F0">{{ it.weight }}</div>
+                  <button onClick="{{ it.onWeightUp }}" style="width:44px;height:44px;border-radius:12px;background:#121212;border:1px solid #3A3A3A;color:#FF7A30;font-size:20px;font-weight:700;flex-shrink:0">+</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px">
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:12px;color:#8A8A8A;font-weight:600">Séries</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <button onClick="{{ it.onSetsDown }}" style="width:40px;height:40px;border-radius:10px;background:#121212;border:1px solid #3A3A3A;color:#F5F5F0;font-size:18px;font-weight:700;flex-shrink:0">−</button>
+                    <div style="flex:1;text-align:center;font-size:17px;font-weight:800;color:#F5F5F0">{{ it.sets }}</div>
+                    <button onClick="{{ it.onSetsUp }}" style="width:40px;height:40px;border-radius:10px;background:#121212;border:1px solid #3A3A3A;color:#FF7A30;font-size:18px;font-weight:700;flex-shrink:0">+</button>
+                  </div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:12px;color:#8A8A8A;font-weight:600">Reps</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <button onClick="{{ it.onRepsDown }}" style="width:40px;height:40px;border-radius:10px;background:#121212;border:1px solid #3A3A3A;color:#F5F5F0;font-size:18px;font-weight:700;flex-shrink:0">−</button>
+                    <div style="flex:1;text-align:center;font-size:17px;font-weight:800;color:#F5F5F0">{{ it.reps }}</div>
+                    <button onClick="{{ it.onRepsUp }}" style="width:40px;height:40px;border-radius:10px;background:#121212;border:1px solid #3A3A3A;color:#FF7A30;font-size:18px;font-weight:700;flex-shrink:0">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+
+  <div style="position:sticky;bottom:0;background:linear-gradient(to top,#121212 60%,transparent);padding:20px 20px 28px 20px">
+    <button onClick="{{ onSaveExecution }}" style="background:#FF7A30;color:#121212;border:none;border-radius:100px;padding:16px 28px;font-size:16px;font-weight:700;width:100%;font-family:'Inter',sans-serif;box-shadow:0 8px 24px rgba(255,122,48,0.35)">
+      Salvar treino de hoje
+    </button>
+  </div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isRunExecutionScreen }}" hint-placeholder-val="{{ false }}">
+<div style="width:390px;min-height:844px;background:#121212;font-family:'Inter',sans-serif;color:#F5F5F0;margin:0 auto;position:relative;box-sizing:border-box;display:flex;flex-direction:column">
+
+  <div style="padding:24px 20px 8px 20px;display:flex;align-items:center;gap:14px">
+    <div onClick="{{ goToList }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:19px;color:#F5F5F0;flex-shrink:0;cursor:pointer">←</div>
+    <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em">Registrar corrida</div>
+  </div>
+
+  <div style="padding:0 20px 20px 20px;display:flex;flex-direction:column;gap:24px;flex:1">
+
+    <div style="background:#1C1C1C;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;border:1px solid #2A2A2A">
+      <div style="font-size:12px;color:#8A8A8A;font-weight:600">Última corrida</div>
+      <div style="font-size:14px;color:#F5F5F0;font-weight:600">{{ runLastInfo }}</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Distância (km)</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <button onClick="{{ onDistanceDown }}" style="width:52px;height:52px;border-radius:14px;background:#1C1C1C;border:1px solid #2A2A2A;color:#F5F5F0;font-size:22px;font-weight:700;flex-shrink:0">−</button>
+        <div style="flex:1;text-align:center;font-size:32px;font-weight:800;color:#F5F5F0">{{ runDistance }}</div>
+        <button onClick="{{ onDistanceUp }}" style="width:52px;height:52px;border-radius:14px;background:#1C1C1C;border:1px solid #2A2A2A;color:#FF7A30;font-size:22px;font-weight:700;flex-shrink:0">+</button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Tempo (min)</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <button onClick="{{ onTimeDown }}" style="width:52px;height:52px;border-radius:14px;background:#1C1C1C;border:1px solid #2A2A2A;color:#F5F5F0;font-size:22px;font-weight:700;flex-shrink:0">−</button>
+        <div style="flex:1;text-align:center;font-size:32px;font-weight:800;color:#F5F5F0">{{ runTime }}</div>
+        <button onClick="{{ onTimeUp }}" style="width:52px;height:52px;border-radius:14px;background:#1C1C1C;border:1px solid #2A2A2A;color:#FF7A30;font-size:22px;font-weight:700;flex-shrink:0">+</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position:sticky;bottom:0;background:linear-gradient(to top,#121212 60%,transparent);padding:20px 20px 28px 20px">
+    <button onClick="{{ onSaveRun }}" style="background:#FF7A30;color:#121212;border:none;border-radius:100px;padding:16px 28px;font-size:16px;font-weight:700;width:100%;font-family:'Inter',sans-serif;box-shadow:0 8px 24px rgba(255,122,48,0.35)">
+      Salvar corrida
+    </button>
+  </div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isCalendarScreen }}" hint-placeholder-val="{{ false }}">
+<div style="width:390px;min-height:844px;background:#121212;font-family:'Inter',sans-serif;color:#F5F5F0;margin:0 auto;position:relative;box-sizing:border-box;display:flex;flex-direction:column">
+
+  <div style="padding:24px 20px 8px 20px;display:flex;align-items:center;gap:14px">
+    <div onClick="{{ goToList }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:19px;color:#F5F5F0;flex-shrink:0;cursor:pointer">←</div>
+    <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em">Histórico</div>
+  </div>
+
+  <div style="padding:20px;display:flex;flex-direction:column;gap:16px;flex:1">
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <button onClick="{{ onPrevYear }}" style="width:36px;height:36px;border-radius:10px;background:#1C1C1C;border:1px solid #2A2A2A;color:#8A8A8A;font-size:14px;font-weight:700">«</button>
+      <div style="font-size:14px;font-weight:700;color:#8A8A8A;min-width:52px;text-align:center">{{ yearLabel }}</div>
+      <button onClick="{{ onNextYear }}" style="width:36px;height:36px;border-radius:10px;background:#1C1C1C;border:1px solid #2A2A2A;color:#8A8A8A;font-size:14px;font-weight:700">»</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <button onClick="{{ onPrevMonth }}" style="width:40px;height:40px;border-radius:10px;background:#1C1C1C;border:1px solid #2A2A2A;color:#F5F5F0;font-size:16px;font-weight:700">‹</button>
+      <div style="font-size:16px;font-weight:700;color:#F5F5F0">{{ monthLabel }}</div>
+      <button onClick="{{ onNextMonth }}" style="width:40px;height:40px;border-radius:10px;background:#1C1C1C;border:1px solid #2A2A2A;color:#F5F5F0;font-size:16px;font-weight:700">›</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">S</div>
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">T</div>
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">Q</div>
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">Q</div>
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">S</div>
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">S</div>
+      <div style="font-size:11px;color:#666;font-weight:700;text-align:center">D</div>
+      <sc-for list="{{ calendarCells }}" as="cell" hint-placeholder-count="35">
+        <sc-if value="{{ cell.blank }}" hint-placeholder-val="{{ false }}">
+          <div></div>
+        </sc-if>
+        <sc-if value="{{ cell.notBlank }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ cell.onClick }}" style="{{ cell.cellStyle }}">{{ cell.day }}</div>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+      <div style="width:10px;height:10px;border-radius:3px;background:#FF7A30"></div>
+      <div style="font-size:12px;color:#8A8A8A;font-weight:500">Dia com treino registrado</div>
+    </div>
+
+    <div style="background:#1C1C1C;border-radius:16px;padding:16px;border:1px solid #2A2A2A;margin-top:8px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:14px;font-weight:700;color:#F5F5F0">{{ selectedDayLabel }}</div>
+      <sc-if value="{{ hasSelectedEntries }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ selectedEntries }}" as="e" hint-placeholder-count="1">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:13px;font-weight:700;color:#FF7A30">{{ e.label }}</div>
+              <sc-if value="{{ e.isStrength }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <sc-for list="{{ e.exerciseLines }}" as="line" hint-placeholder-count="3">
+                    <div style="font-size:13px;color:#B0B0B0;font-weight:500">{{ line.text }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ e.isRunning }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13px;color:#B0B0B0;font-weight:500">{{ e.runSummary }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noSelectedEntries }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;color:#666;font-weight:600;letter-spacing:0.02em">NÃO HOUVE TREINO NESTE DIA</div>
+      </sc-if>
+    </div>
+
+  </div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdminScreen }}" hint-placeholder-val="{{ false }}">
+<div style="width:390px;min-height:844px;background:#121212;font-family:'Inter',sans-serif;color:#F5F5F0;margin:0 auto;position:relative;box-sizing:border-box;display:flex;flex-direction:column">
+
+  <div style="padding:24px 20px 8px 20px;display:flex;align-items:center;gap:14px">
+    <div onClick="{{ goToList }}" style="width:44px;height:44px;border-radius:12px;background:#1C1C1C;display:flex;align-items:center;justify-content:center;font-size:19px;color:#F5F5F0;flex-shrink:0;cursor:pointer">←</div>
+    <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em">Administrar exercícios</div>
+  </div>
+
+  <div style="padding:16px 20px 32px 20px;display:flex;flex-direction:column;gap:22px;flex:1">
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Tipo de treino</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ adminWorkoutChips }}" as="c" hint-placeholder-count="4">
+          <div style="{{ c.style }}" onClick="{{ c.onClick }}">{{ c.name }}</div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Exercícios cadastrados</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ adminExercises }}" as="ex" hint-placeholder-count="6">
+          <div style="background:#1C1C1C;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A">
+            <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:700;color:#F5F5F0">{{ ex.name }}</div>
+              <div style="font-size:12px;color:#8A8A8A;font-weight:500">{{ ex.infoText }}</div>
+            </div>
+            <button onClick="{{ ex.onRemove }}" style="width:36px;height:36px;border-radius:10px;background:#241212;border:1px solid #3A2020;color:#E06060;font-size:16px;font-weight:700;flex-shrink:0">✕</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;background:#161616;border-radius:18px;padding:16px;border:1px solid #2A2A2A">
+      <div style="font-size:13px;color:#9A9A9A;font-weight:600">Novo exercício</div>
+      <input value="{{ newExerciseName }}" onChange="{{ onNewExerciseNameChange }}" placeholder="Nome do exercício" style="background:#1C1C1C;border:1px solid #2A2A2A;border-radius:12px;padding:14px;font-size:15px;font-weight:600;color:#F5F5F0;font-family:'Inter',sans-serif;min-height:44px;box-sizing:border-box" />
+
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:12px;color:#8A8A8A;font-weight:600">Peso padrão (kg)</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button onClick="{{ onNewWeightDown }}" style="width:40px;height:40px;border-radius:10px;background:#1C1C1C;border:1px solid #3A3A3A;color:#F5F5F0;font-size:18px;font-weight:700;flex-shrink:0">−</button>
+          <div style="flex:1;text-align:center;font-size:17px;font-weight:800;color:#F5F5F0">{{ newExerciseWeight }}</div>
+          <button onClick="{{ onNewWeightUp }}" style="width:40px;height:40px;border-radius:10px;background:#1C1C1C;border:1px solid #3A3A3A;color:#FF7A30;font-size:18px;font-weight:700;flex-shrink:0">+</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;color:#8A8A8A;font-weight:600">Séries</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onClick="{{ onNewSetsDown }}" style="width:36px;height:36px;border-radius:10px;background:#1C1C1C;border:1px solid #3A3A3A;color:#F5F5F0;font-size:16px;font-weight:700;flex-shrink:0">−</button>
+            <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#F5F5F0">{{ newExerciseSets }}</div>
+            <button onClick="{{ onNewSetsUp }}" style="width:36px;height:36px;border-radius:10px;background:#1C1C1C;border:1px solid #3A3A3A;color:#FF7A30;font-size:16px;font-weight:700;flex-shrink:0">+</button>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;color:#8A8A8A;font-weight:600">Reps</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onClick="{{ onNewRepsDown }}" style="width:36px;height:36px;border-radius:10px;background:#1C1C1C;border:1px solid #3A3A3A;color:#F5F5F0;font-size:16px;font-weight:700;flex-shrink:0">−</button>
+            <div style="flex:1;text-align:center;font-size:16px;font-weight:800;color:#F5F5F0">{{ newExerciseReps }}</div>
+            <button onClick="{{ onNewRepsUp }}" style="width:36px;height:36px;border-radius:10px;background:#1C1C1C;border:1px solid #3A3A3A;color:#FF7A30;font-size:16px;font-weight:700;flex-shrink:0">+</button>
+          </div>
+        </div>
+      </div>
+
+      <button onClick="{{ onAddAdminExercise }}" style="background:#FF7A30;color:#121212;border:none;border-radius:100px;padding:14px 20px;font-size:15px;font-weight:700;width:100%;font-family:'Inter',sans-serif">
+        + Adicionar exercício
+      </button>
+    </div>
+
+  </div>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  monthNames = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+  dateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  state = {
+    screen: "list",
+    selectedWorkoutName: null,
+    selectedCategory: "Superiores",
+    exercises: [
+      { name: "Supino reto com barra", sets: 4, reps: 10, load: 40, slotId: "ex-1" },
+      { name: "Crucifixo com halteres", sets: 3, reps: 12, load: 14, slotId: "ex-2" },
+      { name: "Tríceps corda", sets: 3, reps: 15, load: 20, slotId: "ex-3" },
+      { name: "Tríceps testa", sets: 3, reps: 12, load: 16, slotId: "ex-4" },
+    ],
+    execution: null,
+    runDraft: null,
+    selectedCalendarDate: null,
+    calendarYear: null,
+    calendarMonth: null,
+    adminSelectedWorkout: "Treino A - Peito e Tríceps",
+    newExerciseName: "",
+    newExerciseWeight: 0,
+    newExerciseSets: 3,
+    newExerciseReps: 12,
+    logsByDate: {
+      "2026-08-03": [{
+        label: "Treino A - Peito e Tríceps", type: "strength",
+        exercises: [
+          { name: "Supino reto com barra", weight: 40, sets: 4, reps: 10 },
+          { name: "Supino inclinado com halteres", weight: 16, sets: 3, reps: 12 },
+          { name: "Crucifixo com halteres", weight: 14, sets: 3, reps: 12 },
+          { name: "Tríceps corda", weight: 20, sets: 3, reps: 15 },
+        ],
+      }],
+      "2026-08-04": [{ label: "Corrida", type: "running", distance: 5, time: 32 }],
+      "2026-08-06": [{
+        label: "Treino B - Pernas", type: "strength",
+        exercises: [
+          { name: "Agachamento livre", weight: 60, sets: 4, reps: 10 },
+          { name: "Leg press", weight: 90, sets: 4, reps: 12 },
+          { name: "Cadeira extensora", weight: 35, sets: 3, reps: 15 },
+        ],
+      }],
+      "2026-08-08": [
+        {
+          label: "Treino C - Costas e Bíceps", type: "strength",
+          exercises: [
+            { name: "Puxada frontal", weight: 45, sets: 4, reps: 10 },
+            { name: "Remada curvada", weight: 40, sets: 4, reps: 10 },
+            { name: "Rosca direta", weight: 14, sets: 3, reps: 12 },
+          ],
+        },
+        { label: "Corrida", type: "running", distance: 3, time: 18 },
+      ],
+      "2026-08-10": [{
+        label: "Treino D - Ombro e Abdômen", type: "strength",
+        exercises: [
+          { name: "Desenvolvimento com halteres", weight: 12, sets: 4, reps: 10 },
+          { name: "Elevação lateral", weight: 8, sets: 3, reps: 15 },
+          { name: "Abdominal supra", weight: 0, sets: 3, reps: 20 },
+        ],
+      }],
+    },
+  };
+
+  workoutLibrary = {
+    "Treino A - Peito e Tríceps": {
+      lastDate: "há 2 dias",
+      knownExercises: [
+        { id: "e1", name: "Supino reto com barra", slotId: "run-e1", lastWeight: 40, lastSets: 4, lastReps: 10 },
+        { id: "e2", name: "Supino inclinado com halteres", slotId: "run-e2", lastWeight: 16, lastSets: 3, lastReps: 12 },
+        { id: "e3", name: "Crucifixo com halteres", slotId: "run-e3", lastWeight: 14, lastSets: 3, lastReps: 12 },
+        { id: "e4", name: "Crossover no cabo", slotId: "run-e4", lastWeight: 12, lastSets: 3, lastReps: 12 },
+        { id: "e5", name: "Supino máquina", slotId: "run-e5", lastWeight: 35, lastSets: 3, lastReps: 10 },
+        { id: "e6", name: "Tríceps corda", slotId: "run-e6", lastWeight: 20, lastSets: 3, lastReps: 15 },
+        { id: "e7", name: "Tríceps testa", slotId: "run-e7", lastWeight: 16, lastSets: 3, lastReps: 12 },
+        { id: "e8", name: "Mergulho no banco", slotId: "run-e8", lastWeight: 0, lastSets: 3, lastReps: 15 },
+      ],
+    },
+    "Treino B - Pernas": {
+      lastDate: "há 4 dias",
+      knownExercises: [
+        { id: "e1", name: "Agachamento livre", slotId: "run-e1", lastWeight: 60, lastSets: 4, lastReps: 10 },
+        { id: "e2", name: "Leg press", slotId: "run-e2", lastWeight: 90, lastSets: 4, lastReps: 12 },
+        { id: "e3", name: "Cadeira extensora", slotId: "run-e3", lastWeight: 35, lastSets: 3, lastReps: 15 },
+        { id: "e4", name: "Cadeira flexora", slotId: "run-e4", lastWeight: 30, lastSets: 3, lastReps: 15 },
+        { id: "e5", name: "Afundo com halteres", slotId: "run-e5", lastWeight: 10, lastSets: 3, lastReps: 12 },
+        { id: "e6", name: "Stiff com barra", slotId: "run-e6", lastWeight: 40, lastSets: 3, lastReps: 12 },
+        { id: "e7", name: "Panturrilha em pé", slotId: "run-e7", lastWeight: 40, lastSets: 4, lastReps: 15 },
+        { id: "e8", name: "Panturrilha sentado", slotId: "run-e8", lastWeight: 25, lastSets: 3, lastReps: 15 },
+      ],
+    },
+    "Treino C - Costas e Bíceps": {
+      lastDate: "há 5 dias",
+      knownExercises: [
+        { id: "e1", name: "Puxada frontal", slotId: "run-e1", lastWeight: 45, lastSets: 4, lastReps: 10 },
+        { id: "e2", name: "Remada curvada", slotId: "run-e2", lastWeight: 40, lastSets: 4, lastReps: 10 },
+        { id: "e3", name: "Remada unilateral", slotId: "run-e3", lastWeight: 18, lastSets: 3, lastReps: 12 },
+        { id: "e4", name: "Puxada aberta", slotId: "run-e4", lastWeight: 42, lastSets: 3, lastReps: 10 },
+        { id: "e5", name: "Rosca direta", slotId: "run-e5", lastWeight: 14, lastSets: 3, lastReps: 12 },
+        { id: "e6", name: "Rosca alternada", slotId: "run-e6", lastWeight: 12, lastSets: 3, lastReps: 12 },
+        { id: "e7", name: "Rosca martelo", slotId: "run-e7", lastWeight: 12, lastSets: 3, lastReps: 12 },
+      ],
+    },
+    "Treino D - Ombro e Abdômen": {
+      lastDate: "há 1 semana",
+      knownExercises: [
+        { id: "e1", name: "Desenvolvimento com halteres", slotId: "run-e1", lastWeight: 12, lastSets: 4, lastReps: 10 },
+        { id: "e2", name: "Elevação lateral", slotId: "run-e2", lastWeight: 8, lastSets: 3, lastReps: 15 },
+        { id: "e3", name: "Elevação frontal", slotId: "run-e3", lastWeight: 8, lastSets: 3, lastReps: 15 },
+        { id: "e4", name: "Encolhimento de trapézio", slotId: "run-e4", lastWeight: 20, lastSets: 3, lastReps: 12 },
+        { id: "e5", name: "Abdominal supra", slotId: "run-e5", lastWeight: 0, lastSets: 3, lastReps: 20 },
+        { id: "e6", name: "Prancha isométrica", slotId: "run-e6", lastWeight: 0, lastSets: 3, lastReps: 1 },
+      ],
+    },
+  };
+
+  runningLog = { lastDistance: 5, lastTime: 32, lastDate: "há 3 dias" };
+
+  moveExercise(index, dir) {
+    const list = [...this.state.exercises];
+    const target = index + dir;
+    if (target < 0 || target >= list.length) return;
+    [list[index], list[target]] = [list[target], list[index]];
+    this.setState({ exercises: list });
+  }
+
+  startExecution(workoutName) {
+    const lib = this.workoutLibrary[workoutName];
+    const items = lib.knownExercises.map((e) => ({
+      ...e,
+      selected: false,
+      weight: e.lastWeight,
+      sets: e.lastSets,
+      reps: e.lastReps,
+    }));
+    this.setState({
+      screen: "execution",
+      selectedWorkoutName: workoutName,
+      execution: { lastDate: lib.lastDate, items },
+    });
+  }
+
+  toggleExerciseSelected(id) {
+    const items = this.state.execution.items.map((it) =>
+      it.id === id ? { ...it, selected: !it.selected } : it
+    );
+    this.setState({ execution: { ...this.state.execution, items } });
+  }
+
+  updateExerciseField(id, field, value) {
+    const items = this.state.execution.items.map((it) =>
+      it.id === id ? { ...it, [field]: value } : it
+    );
+    this.setState({ execution: { ...this.state.execution, items } });
+  }
+
+  stepExerciseField(id, field, delta, min) {
+    const items = this.state.execution.items.map((it) =>
+      it.id === id ? { ...it, [field]: Math.max(min, it[field] + delta) } : it
+    );
+    this.setState({ execution: { ...this.state.execution, items } });
+  }
+
+  addLog(entry) {
+    const today = this.dateKey(new Date());
+    const logsByDate = { ...this.state.logsByDate };
+    logsByDate[today] = [...(logsByDate[today] || []), entry];
+    this.setState({ logsByDate });
+  }
+
+  goToCalendar() {
+    const now = new Date();
+    this.setState({
+      screen: "calendar",
+      selectedCalendarDate: this.dateKey(now),
+      calendarYear: now.getFullYear(),
+      calendarMonth: now.getMonth(),
+    });
+  }
+
+  selectCalendarDate(key) {
+    this.setState({ selectedCalendarDate: key });
+  }
+
+  goToAdmin() {
+    this.setState({ screen: "admin" });
+  }
+
+  removeExercise(workout, id) {
+    const lib = this.workoutLibrary[workout];
+    lib.knownExercises = lib.knownExercises.filter((e) => e.id !== id);
+    this.forceUpdate();
+  }
+
+  addAdminExercise() {
+    const name = this.state.newExerciseName.trim();
+    if (!name) return;
+    const workout = this.state.adminSelectedWorkout;
+    const lib = this.workoutLibrary[workout];
+    const newId = "e" + Date.now();
+    lib.knownExercises.push({
+      id: newId,
+      name,
+      slotId: `admin-${newId}`,
+      lastWeight: this.state.newExerciseWeight,
+      lastSets: this.state.newExerciseSets,
+      lastReps: this.state.newExerciseReps,
+    });
+    this.setState({ newExerciseName: "", newExerciseWeight: 0, newExerciseSets: 3, newExerciseReps: 12 });
+  }
+
+  changeCalendarMonth(delta) {
+    let month = this.state.calendarMonth + delta;
+    let year = this.state.calendarYear;
+    if (month < 0) { month = 11; year -= 1; }
+    if (month > 11) { month = 0; year += 1; }
+    this.setState({ calendarMonth: month, calendarYear: year });
+  }
+
+  changeCalendarYear(delta) {
+    this.setState({ calendarYear: this.state.calendarYear + delta });
+  }
+
+  saveExecution() {
+    const selected = this.state.execution.items.filter((i) => i.selected);
+    if (selected.length > 0) {
+      this.addLog({
+        label: this.state.selectedWorkoutName,
+        type: "strength",
+        exercises: selected.map((it) => ({ name: it.name, weight: it.weight, sets: it.sets, reps: it.reps })),
+      });
+    }
+    this.setState({ screen: "list" });
+  }
+
+  startRunExecution() {
+    this.setState({
+      screen: "runExecution",
+      selectedWorkoutName: "Corrida",
+      runDraft: { distance: this.runningLog.lastDistance, time: this.runningLog.lastTime },
+    });
+  }
+
+  stepRunField(field, delta, min) {
+    const runDraft = { ...this.state.runDraft, [field]: Math.max(min, this.state.runDraft[field] + delta) };
+    this.setState({ runDraft });
+  }
+
+  saveRun() {
+    const { distance, time } = this.state.runDraft;
+    this.addLog({ label: "Corrida", type: "running", distance, time });
+    this.setState({ screen: "list" });
+  }
+
+  renderVals() {
+    const categoryNames = ["Superiores", "Inferiores", "Peito", "Costas", "Ombro", "Abdômen"];
+    const categories = categoryNames.map((name) => {
+      const selected = name === this.state.selectedCategory;
+      return {
+        name,
+        onClick: () => this.setState({ selectedCategory: name }),
+        style: `padding:13px 18px;border-radius:100px;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;min-height:44px;box-sizing:border-box;display:flex;align-items:center;${
+          selected
+            ? "background:#FF7A30;color:#121212;"
+            : "background:#1C1C1C;color:#B0B0B0;border:1px solid #2A2A2A;"
+        }`,
+      };
+    });
+
+    const arrowBaseStyle = "background:#242424;border:none;border-radius:10px;width:44px;height:38px;color:#B0B0B0;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;cursor:pointer;";
+    const exercises = this.state.exercises.map((ex, i) => ({
+      ...ex,
+      upStyle: arrowBaseStyle + (i === 0 ? "opacity:0.3;" : ""),
+      downStyle: arrowBaseStyle + (i === this.state.exercises.length - 1 ? "opacity:0.3;" : ""),
+      onUp: () => this.moveExercise(i, -1),
+      onDown: () => this.moveExercise(i, 1),
+    }));
+
+    const workoutData = [
+      { name: "Treino A - Peito e Tríceps", category: "Superiores", duration: 45, lastDone: "há 2 dias" },
+      { name: "Treino B - Pernas", category: "Inferiores", duration: 50, lastDone: "há 4 dias" },
+      { name: "Treino C - Costas e Bíceps", category: "Superiores", duration: 45, lastDone: "há 5 dias" },
+      { name: "Treino D - Ombro e Abdômen", category: "Ombro", duration: 35, lastDone: "há 1 semana" },
+      { name: "Corrida", category: "Cardio", meta: "Ao ar livre", duration: 30, lastDone: "há 3 dias", isRunning: true },
+    ].map((w) => (w.isRunning ? w : { ...w, meta: `${this.workoutLibrary[w.name].knownExercises.length} exercícios` }));
+    const workouts = workoutData.map((w) => ({
+      ...w,
+      onClick: () => (w.isRunning ? this.startRunExecution() : this.startExecution(w.name)),
+    }));
+
+    const todayKey = this.dateKey(new Date());
+    const year = this.state.calendarYear ?? new Date().getFullYear();
+    const month = this.state.calendarMonth ?? new Date().getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const leadingBlanks = (firstOfMonth.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthLabel = this.monthNames[month].charAt(0).toUpperCase() + this.monthNames[month].slice(1);
+    const yearLabel = String(year);
+
+    const calendarCells = [];
+    for (let i = 0; i < leadingBlanks; i++) calendarCells.push({ blank: true, notBlank: false });
+    for (let day = 1; day <= daysInMonth; day++) {
+      const key = this.dateKey(new Date(year, month, day));
+      const hasLog = !!this.state.logsByDate[key];
+      const isToday = key === todayKey;
+      const isSelected = key === this.state.selectedCalendarDate;
+      calendarCells.push({
+        blank: false,
+        notBlank: true,
+        day,
+        key,
+        onClick: () => this.selectCalendarDate(key),
+        cellStyle: `width:100%;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;box-sizing:border-box;${
+          hasLog
+            ? "background:#FF7A30;color:#121212;"
+            : "background:#1C1C1C;color:#B0B0B0;"
+        }${isSelected ? "border:2px solid #F5F5F0;" : isToday ? "border:2px solid #FF7A30;" : "border:2px solid transparent;"}`,
+      });
+    }
+
+    const rawSelectedEntries = this.state.selectedCalendarDate ? this.state.logsByDate[this.state.selectedCalendarDate] || [] : [];
+    const selectedEntries = rawSelectedEntries.map((e) => {
+      if (e.type === "running") {
+        return { label: e.label, isRunning: true, isStrength: false, runSummary: `${e.distance} km em ${e.time} min` };
+      }
+      return {
+        label: e.label,
+        isRunning: false,
+        isStrength: true,
+        exerciseLines: e.exercises.map((ex) => ({
+          text: `${ex.name} — ${ex.weight > 0 ? ex.weight + " kg" : "peso corporal"} · ${ex.sets}x${ex.reps}`,
+        })),
+      };
+    });
+    let selectedDayLabel = "";
+    if (this.state.selectedCalendarDate) {
+      const [y, m, d] = this.state.selectedCalendarDate.split("-").map(Number);
+      selectedDayLabel = `${d} de ${this.monthNames[m - 1]}`;
+    }
+
+    const selectedCount = this.state.execution ? this.state.execution.items.filter((i) => i.selected).length : 0;
+    const executionItems = this.state.execution
+      ? this.state.execution.items.map((it) => ({
+          ...it,
+          cardStyle: `background:#1C1C1C;border-radius:18px;border:1px solid ${it.selected ? "#FF7A30" : "#2A2A2A"};overflow:hidden;`,
+          checkStyle: `width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;${
+            it.selected ? "background:#FF7A30;color:#121212;" : "background:transparent;border:1.5px solid #3A3A3A;color:transparent;"
+          }`,
+          lastInfo: `Última vez: ${it.lastWeight > 0 ? it.lastWeight + " kg" : "peso corporal"} · ${it.lastSets}x${it.lastReps}`,
+          onToggle: () => this.toggleExerciseSelected(it.id),
+          onWeightDown: () => this.stepExerciseField(it.id, "weight", -2.5, 0),
+          onWeightUp: () => this.stepExerciseField(it.id, "weight", 2.5, 0),
+          onSetsDown: () => this.stepExerciseField(it.id, "sets", -1, 1),
+          onSetsUp: () => this.stepExerciseField(it.id, "sets", 1, 1),
+          onRepsDown: () => this.stepExerciseField(it.id, "reps", -1, 1),
+          onRepsUp: () => this.stepExerciseField(it.id, "reps", 1, 1),
+        }))
+      : [];
+
+    const strengthWorkoutNames = Object.keys(this.workoutLibrary);
+    const adminWorkoutChips = strengthWorkoutNames.map((name) => ({
+      name,
+      onClick: () => this.setState({ adminSelectedWorkout: name }),
+      style: `padding:12px 16px;border-radius:100px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;min-height:40px;box-sizing:border-box;display:flex;align-items:center;white-space:nowrap;${
+        name === this.state.adminSelectedWorkout
+          ? "background:#FF7A30;color:#121212;"
+          : "background:#1C1C1C;color:#B0B0B0;border:1px solid #2A2A2A;"
+      }`,
+    }));
+    const adminExercises = this.workoutLibrary[this.state.adminSelectedWorkout].knownExercises.map((e) => ({
+      ...e,
+      infoText: `${e.lastWeight > 0 ? e.lastWeight + " kg" : "peso corporal"} · ${e.lastSets}x${e.lastReps}`,
+      onRemove: () => this.removeExercise(this.state.adminSelectedWorkout, e.id),
+    }));
+
+    return {
+      categories,
+      exercises,
+      exerciseCount: this.state.exercises.length,
+      workouts,
+      isAdminScreen: this.state.screen === "admin",
+      goToAdmin: () => this.goToAdmin(),
+      adminWorkoutChips,
+      adminExercises,
+      newExerciseName: this.state.newExerciseName,
+      onNewExerciseNameChange: (e) => this.setState({ newExerciseName: e.target.value }),
+      newExerciseWeight: this.state.newExerciseWeight,
+      newExerciseSets: this.state.newExerciseSets,
+      newExerciseReps: this.state.newExerciseReps,
+      onNewWeightDown: () => this.setState({ newExerciseWeight: Math.max(0, this.state.newExerciseWeight - 2.5) }),
+      onNewWeightUp: () => this.setState({ newExerciseWeight: this.state.newExerciseWeight + 2.5 }),
+      onNewSetsDown: () => this.setState({ newExerciseSets: Math.max(1, this.state.newExerciseSets - 1) }),
+      onNewSetsUp: () => this.setState({ newExerciseSets: this.state.newExerciseSets + 1 }),
+      onNewRepsDown: () => this.setState({ newExerciseReps: Math.max(1, this.state.newExerciseReps - 1) }),
+      onNewRepsUp: () => this.setState({ newExerciseReps: this.state.newExerciseReps + 1 }),
+      onAddAdminExercise: () => this.addAdminExercise(),
+      selectedWorkoutName: this.state.selectedWorkoutName,
+      isListScreen: this.state.screen === "list",
+      isCreateScreen: this.state.screen === "create",
+      isExecutionScreen: this.state.screen === "execution",
+      isRunExecutionScreen: this.state.screen === "runExecution",
+      isCalendarScreen: this.state.screen === "calendar",
+      goToList: () => this.setState({ screen: "list" }),
+      goToCreate: () => this.setState({ screen: "create" }),
+      goToCalendar: () => this.goToCalendar(),
+      onPrevMonth: () => this.changeCalendarMonth(-1),
+      onNextMonth: () => this.changeCalendarMonth(1),
+      onPrevYear: () => this.changeCalendarYear(-1),
+      onNextYear: () => this.changeCalendarYear(1),
+      monthLabel,
+      yearLabel,
+      calendarCells,
+      selectedEntries,
+      hasSelectedEntries: selectedEntries.length > 0,
+      noSelectedEntries: selectedEntries.length === 0,
+      selectedDayLabel,
+      executionLastDate: this.state.execution ? this.state.execution.lastDate : "",
+      executionItems,
+      selectedCount,
+      saveDisabled: selectedCount === 0,
+      onSaveExecution: () => this.saveExecution(),
+      runDistance: this.state.runDraft ? this.state.runDraft.distance : 0,
+      runTime: this.state.runDraft ? this.state.runDraft.time : 0,
+      runLastInfo: `${this.runningLog.lastDistance} km em ${this.runningLog.lastTime} min · ${this.runningLog.lastDate}`,
+      onDistanceDown: () => this.stepRunField("distance", -0.5, 0),
+      onDistanceUp: () => this.stepRunField("distance", 0.5, 0),
+      onTimeDown: () => this.stepRunField("time", -1, 0),
+      onTimeUp: () => this.stepRunField("time", 1, 0),
+      onSaveRun: () => this.saveRun(),
+    };
+  }
+}
+</script>
+</body>
+</html>
