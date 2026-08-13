@@ -1,7 +1,27 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+# ---------- Usuario / autenticação ----------
+
+
+class UsuarioCreate(BaseModel):
+    nome_usuario: str = Field(min_length=3, max_length=40)
+    senha: str = Field(min_length=8, max_length=200)
+
+
+class UsuarioLogin(BaseModel):
+    nome_usuario: str
+    senha: str
+
+
+class UsuarioOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    nome_usuario: str
+    foto_perfil_url: Optional[str] = None
 
 
 # ---------- Exercicio ----------
@@ -130,6 +150,7 @@ class DiaExercicioLinha(BaseModel):
 
 
 class DiaEntrada(BaseModel):
+    sessao_id: str
     treino_id: int
     label: str
     tipo: str  # 'forca' | 'corrida'

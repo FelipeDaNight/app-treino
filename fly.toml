@@ -1,0 +1,26 @@
+# Configuração para deploy no Fly.io (grátis, com volume persistente).
+# Troque "app" se o nome já estiver em uso por outra pessoa no Fly.io.
+app = "app-treino-felipe"
+primary_region = "gru" # São Paulo
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  SESSION_HTTPS_ONLY = "true"
+
+[[mounts]]
+  source = "app_treino_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

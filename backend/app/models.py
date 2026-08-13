@@ -6,6 +6,18 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
+class Usuario(Base):
+    """Conta de usuário: login + dados de perfil."""
+
+    __tablename__ = "usuarios"
+
+    id = Column(Integer, primary_key=True)
+    nome_usuario = Column(String, nullable=False, unique=True, index=True)
+    senha_hash = Column(String, nullable=False)
+    foto_perfil_url = Column(String, nullable=True)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+
 class Exercicio(Base):
     """Biblioteca global de exercícios (nome + imagem placeholder)."""
 
@@ -26,6 +38,7 @@ class Treino(Base):
     __tablename__ = "treinos"
 
     id = Column(Integer, primary_key=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False, index=True)
     nome = Column(String, nullable=False)
     categoria = Column(String, nullable=False)
     tipo = Column(String, nullable=False, default="forca")  # 'forca' | 'corrida'
@@ -67,6 +80,7 @@ class RegistroCarga(Base):
     __tablename__ = "registros_carga"
 
     id = Column(Integer, primary_key=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False, index=True)
     treino_id = Column(Integer, ForeignKey("treinos.id"), nullable=False)
     exercicio_id = Column(Integer, ForeignKey("exercicios.id"), nullable=True)
     sessao_id = Column(String, nullable=True, index=True)

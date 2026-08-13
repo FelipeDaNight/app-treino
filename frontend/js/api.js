@@ -1,9 +1,16 @@
 const Api = (() => {
+  let onUnauthorized = null;
+
   async function request(path, options = {}) {
+    const isForm = options.body instanceof FormData;
     const res = await fetch(path, {
-      headers: options.body ? { "Content-Type": "application/json" } : undefined,
+      credentials: "same-origin",
+      headers: options.body && !isForm ? { "Content-Type": "application/json" } : undefined,
       ...options,
     });
+    if (res.status === 401 && path !== "/api/auth/me") {
+      if (onUnauthorized) onUnauthorized();
+    }
     if (!res.ok) {
       let detail = res.statusText;
       try {
@@ -17,6 +24,20 @@ const Api = (() => {
   }
 
   return {
+    setOnUnauthorized: (fn) => {
+      onUnauthorized = fn;
+    },
+    authMe: () => request("/api/auth/me"),
+    authSignup: (payload) =>
+      request("/api/auth/signup", { method: "POST", body: JSON.stringify(payload) }),
+    authLogin: (payload) =>
+      request("/api/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+    authLogout: () => request("/api/auth/logout", { method: "POST" }),
+    authUploadFoto: (file) => {
+      const form = new FormData();
+      form.append("arquivo", file);
+      return request("/api/auth/foto", { method: "POST", body: form });
+    },
     listarTreinos: () => request("/api/treinos"),
     obterTreino: (id) => request(`/api/treinos/${id}`),
     criarTreino: (payload) =>
@@ -35,5 +56,7 @@ const Api = (() => {
       request("/api/registros/corrida", { method: "POST", body: JSON.stringify(payload) }),
     calendarioMes: (ano, mes) => request(`/api/registros/calendario?ano=${ano}&mes=${mes}`),
     registrosDoDia: (data) => request(`/api/registros/dia?data=${data}`),
+    excluirSessao: (sessaoId) =>
+      request(`/api/registros/sessao/${encodeURIComponent(sessaoId)}`, { method: "DELETE" }),
   };
 })();

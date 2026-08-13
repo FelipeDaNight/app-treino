@@ -7,16 +7,30 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
+from ..auth import get_current_user
 from ..database import get_db
 
 router = APIRouter(prefix="/api/registros", tags=["registros"])
 
 
-@router.post("/sessao", response_model=list[int], status_code=201)
-def salvar_sessao(payload: schemas.SessaoCreate, db: Session = Depends(get_db)):
-    treino = db.get(models.Treino, payload.treino_id)
+def _obter_treino_do_usuario(db: Session, treino_id: int, usuario_id: int) -> models.Treino:
+    treino = (
+        db.query(models.Treino)
+        .filter(models.Treino.id == treino_id, models.Treino.usuario_id == usuario_id)
+        .first()
+    )
     if not treino:
         raise HTTPException(404, "Treino não encontrado")
+    return treino
+
+
+@router.post("/sessao", response_model=list[int], status_code=201)
+def salvar_sessao(
+    payload: schemas.SessaoCreate,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    _obter_treino_do_usuario(db, payload.treino_id, usuario.id)
     if not payload.itens:
         raise HTTPException(422, "Nenhum exercício selecionado")
 
@@ -35,6 +49,7 @@ def salvar_sessao(payload: schemas.SessaoCreate, db: Session = Depends(get_db)):
         if not link:
             raise HTTPException(422, f"Exercício {item.treino_exercicio_id} não pertence a este treino")
         registro = models.RegistroCarga(
+            usuario_id=usuario.id,
             treino_id=payload.treino_id,
             exercicio_id=link.exercicio_id,
             sessao_id=sessao_id,
@@ -52,13 +67,16 @@ def salvar_sessao(payload: schemas.SessaoCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/corrida", response_model=int, status_code=201)
-def salvar_corrida(payload: schemas.CorridaCreate, db: Session = Depends(get_db)):
-    treino = db.get(models.Treino, payload.treino_id)
-    if not treino:
-        raise HTTPException(404, "Treino não encontrado")
+def salvar_corrida(
+    payload: schemas.CorridaCreate,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    _obter_treino_do_usuario(db, payload.treino_id, usuario.id)
 
     data = payload.data or date.today()
     registro = models.RegistroCarga(
+        usuario_id=usuario.id,
         treino_id=payload.treino_id,
         exercicio_id=None,
         sessao_id=uuid.uuid4().hex,
@@ -77,6 +95,7 @@ def calendario_mes(
     ano: int = Query(..., ge=2000, le=2100),
     mes: int = Query(..., ge=1, le=12),
     db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
 ):
     primeiro = date(ano, mes, 1)
     ultimo_dia = calendar.monthrange(ano, mes)[1]
@@ -84,7 +103,11 @@ def calendario_mes(
 
     rows = (
         db.query(models.RegistroCarga.data)
-        .filter(models.RegistroCarga.data >= primeiro, models.RegistroCarga.data <= ultimo)
+        .filter(
+            models.RegistroCarga.usuario_id == usuario.id,
+            models.RegistroCarga.data >= primeiro,
+            models.RegistroCarga.data <= ultimo,
+        )
         .distinct()
         .all()
     )
@@ -93,10 +116,14 @@ def calendario_mes(
 
 
 @router.get("/dia", response_model=schemas.DiaOut)
-def registros_do_dia(data: date = Query(...), db: Session = Depends(get_db)):
+def registros_do_dia(
+    data: date = Query(...),
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
     rows = (
         db.query(models.RegistroCarga)
-        .filter(models.RegistroCarga.data == data)
+        .filter(models.RegistroCarga.usuario_id == usuario.id, models.RegistroCarga.data == data)
         .order_by(models.RegistroCarga.criado_em, models.RegistroCarga.id)
         .all()
     )
@@ -107,12 +134,13 @@ def registros_do_dia(data: date = Query(...), db: Session = Depends(get_db)):
         grupos.setdefault(chave, []).append(row)
 
     entradas = []
-    for itens in grupos.values():
+    for chave, itens in grupos.items():
         primeiro = itens[0]
         treino = primeiro.treino
         if treino.tipo == "corrida":
             entradas.append(
                 schemas.DiaEntrada(
+                    sessao_id=chave,
                     treino_id=treino.id,
                     label=treino.nome,
                     tipo="corrida",
@@ -132,6 +160,7 @@ def registros_do_dia(data: date = Query(...), db: Session = Depends(get_db)):
             ]
             entradas.append(
                 schemas.DiaEntrada(
+                    sessao_id=chave,
                     treino_id=treino.id,
                     label=treino.nome,
                     tipo="forca",
@@ -140,3 +169,26 @@ def registros_do_dia(data: date = Query(...), db: Session = Depends(get_db)):
             )
 
     return schemas.DiaOut(data=data, entradas=entradas)
+
+
+@router.delete("/sessao/{sessao_id}", status_code=204)
+def excluir_sessao(
+    sessao_id: str,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    if sessao_id.startswith("registro-"):
+        registro_id = int(sessao_id.removeprefix("registro-"))
+        query = db.query(models.RegistroCarga).filter(
+            models.RegistroCarga.id == registro_id, models.RegistroCarga.usuario_id == usuario.id
+        )
+    else:
+        query = db.query(models.RegistroCarga).filter(
+            models.RegistroCarga.sessao_id == sessao_id, models.RegistroCarga.usuario_id == usuario.id
+        )
+
+    apagados = query.delete(synchronize_session=False)
+    if apagados == 0:
+        raise HTTPException(404, "Sessão não encontrada")
+    db.commit()
+    return None

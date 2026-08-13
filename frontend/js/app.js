@@ -6,9 +6,13 @@ const MONTH_NAMES = [
 const DOW_LETTERS = ["S", "T", "Q", "Q", "S", "S", "D"];
 
 const state = {
-  screen: "loading", // loading | list | create | execution | runExecution | calendar | admin
+  screen: "loading", // loading | login | signup | list | create | execution | runExecution | calendar | admin | profile
   toast: null,
   treinos: [],
+
+  usuario: null, // { id, nome_usuario, foto_perfil_url } | null
+  authError: null,
+  authBusy: false,
 
   createDraft: null, // { nome, categoria, exercicios: [], addFormOpen, newEx: {series,reps,carga} }
 
@@ -66,6 +70,105 @@ function esc(str) {
   return String(str ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
+}
+
+function avatarHtml(usuario, sizeClass) {
+  if (usuario && usuario.foto_perfil_url) {
+    return `<img src="${esc(usuario.foto_perfil_url)}" class="avatar ${sizeClass}" alt="Foto de perfil" />`;
+  }
+  const inicial = usuario && usuario.nome_usuario ? usuario.nome_usuario.charAt(0).toUpperCase() : "?";
+  return `<div class="avatar avatar-placeholder ${sizeClass}">${esc(inicial)}</div>`;
+}
+
+// ---------------------------------------------------------------------
+// Autenticação
+// ---------------------------------------------------------------------
+
+async function boot() {
+  Api.setOnUnauthorized(() => {
+    setState({ usuario: null, screen: "login", authError: null });
+  });
+  const usuario = await Api.authMe();
+  if (usuario) {
+    setState({ usuario });
+    goToList();
+  } else {
+    setState({ screen: "login", authError: null });
+  }
+}
+
+function goToLogin() {
+  setState({ screen: "login", authError: null });
+}
+
+function goToSignup() {
+  setState({ screen: "signup", authError: null });
+}
+
+async function submitLogin() {
+  const nome_usuario = document.getElementById("auth-nome").value.trim();
+  const senha = document.getElementById("auth-senha").value;
+  if (!nome_usuario || !senha) {
+    setState({ authError: "Preencha usuário e senha." });
+    return;
+  }
+  setState({ authBusy: true, authError: null });
+  try {
+    const usuario = await Api.authLogin({ nome_usuario, senha });
+    setState({ usuario, authBusy: false });
+    goToList();
+  } catch (e) {
+    setState({ authBusy: false, authError: e.message });
+  }
+}
+
+async function submitSignup() {
+  const nome_usuario = document.getElementById("auth-nome").value.trim();
+  const senha = document.getElementById("auth-senha").value;
+  const senha2 = document.getElementById("auth-senha2").value;
+  if (!nome_usuario || !senha) {
+    setState({ authError: "Preencha usuário e senha." });
+    return;
+  }
+  if (senha.length < 8) {
+    setState({ authError: "A senha precisa ter pelo menos 8 caracteres." });
+    return;
+  }
+  if (senha !== senha2) {
+    setState({ authError: "As senhas não coincidem." });
+    return;
+  }
+  setState({ authBusy: true, authError: null });
+  try {
+    const usuario = await Api.authSignup({ nome_usuario, senha });
+    setState({ usuario, authBusy: false });
+    goToList();
+  } catch (e) {
+    setState({ authBusy: false, authError: e.message });
+  }
+}
+
+async function logout() {
+  try {
+    await Api.authLogout();
+  } catch (_) {}
+  setState({ usuario: null, screen: "login", authError: null });
+}
+
+function goToProfile() {
+  setState({ screen: "profile", authError: null });
+}
+
+async function onProfilePhotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const usuario = await Api.authUploadFoto(file);
+    setState({ usuario });
+    showToast("Foto atualizada!");
+  } catch (e) {
+    showToast(e.message, true);
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -181,6 +284,24 @@ async function calendarSelectDate(key) {
   try {
     const dia = await Api.registrosDoDia(key);
     setState({ calendar: { ...state.calendar, selectedDate: key, dia } });
+  } catch (e) {
+    showToast(e.message, true);
+  }
+}
+
+async function calendarDeleteEntry(sessaoId) {
+  if (!confirm("Excluir este treino salvo desse dia?")) return;
+  try {
+    await Api.excluirSessao(sessaoId);
+    const { ano, mes, selectedDate } = state.calendar;
+    const [cal, dia] = await Promise.all([
+      Api.calendarioMes(ano, mes),
+      Api.registrosDoDia(selectedDate),
+    ]);
+    setState({
+      calendar: { ...state.calendar, diasComRegistro: cal.dias_com_registro, dia },
+    });
+    showToast("Treino removido do dia.");
   } catch (e) {
     showToast(e.message, true);
   }
@@ -399,6 +520,68 @@ async function adminAddExercicio() {
 // Render: screens
 // ---------------------------------------------------------------------
 
+function renderAuthScreen(mode) {
+  const isSignup = mode === "signup";
+  const errorHtml = state.authError
+    ? `<div class="auth-error">${esc(state.authError)}</div>`
+    : "";
+  const senha2Field = isSignup
+    ? `
+      <div class="field">
+        <div class="field-label">Confirmar senha</div>
+        <input id="auth-senha2" class="text-input" type="password" placeholder="Repita a senha" />
+      </div>`
+    : "";
+  const action = isSignup ? "submitSignup()" : "submitLogin()";
+  const submitLabel = isSignup ? "Criar conta" : "Entrar";
+  const switchHtml = isSignup
+    ? `<button class="link-btn" onclick="goToLogin()">Já tenho conta — entrar</button>`
+    : `<button class="link-btn" onclick="goToSignup()">Criar uma conta nova</button>`;
+
+  return `
+    <div class="screen auth-screen">
+      <div class="auth-hero">
+        <div class="auth-logo">🏋️</div>
+        <div class="title-xl">App de Treino</div>
+        <div class="eyebrow">${isSignup ? "Crie sua conta para começar" : "Entre para ver seus treinos"}</div>
+      </div>
+      <div class="body-pad" style="gap:18px">
+        ${errorHtml}
+        <div class="field">
+          <div class="field-label">Usuário</div>
+          <input id="auth-nome" class="text-input" placeholder="Seu nome de usuário" autocapitalize="none" autocomplete="username" />
+        </div>
+        <div class="field">
+          <div class="field-label">Senha</div>
+          <input id="auth-senha" class="text-input" type="password" placeholder="${isSignup ? "Mínimo de 8 caracteres" : "Sua senha"}" autocomplete="${isSignup ? "new-password" : "current-password"}" />
+        </div>
+        ${senha2Field}
+        <button class="btn-primary" onclick="${action}" ${state.authBusy ? "disabled" : ""}>${state.authBusy ? "Aguarde…" : submitLabel}</button>
+        <div style="display:flex;justify-content:center">${switchHtml}</div>
+      </div>
+    </div>`;
+}
+
+function renderProfile() {
+  const u = state.usuario;
+  return `
+    <div class="screen">
+      <div class="screen-header">
+        <button class="icon-btn" onclick="goToList()">←</button>
+        <div class="screen-title">Perfil</div>
+      </div>
+      <div class="body-pad" style="align-items:center;text-align:center">
+        <label class="avatar-upload">
+          ${avatarHtml(u, "lg")}
+          <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onProfilePhotoSelected(this)" />
+          <div class="avatar-upload-hint">Trocar foto</div>
+        </label>
+        <div class="title-xl" style="margin-top:8px">${esc(u.nome_usuario)}</div>
+        <button class="btn-primary" style="background:#241212;color:var(--danger);box-shadow:none;border:1px solid var(--border-danger);margin-top:24px" onclick="logout()">Sair da conta</button>
+      </div>
+    </div>`;
+}
+
 function renderList() {
   const cards = state.treinos
     .map((w) => {
@@ -429,6 +612,7 @@ function renderList() {
         <div class="header-actions">
           <button class="icon-btn" onclick="goToAdmin()" aria-label="Administrar exercícios">⚙️</button>
           <button class="icon-btn" onclick="goToCalendar()" aria-label="Histórico">📅</button>
+          <button class="icon-btn avatar-btn" onclick="goToProfile()" aria-label="Perfil">${avatarHtml(state.usuario, "sm")}</button>
         </div>
       </div>
       <div class="workout-list">
@@ -676,7 +860,10 @@ function renderCalendar() {
         if (e.tipo === "corrida") {
           return `
             <div class="day-entry">
-              <div class="entry-label">${esc(e.label)}</div>
+              <div class="entry-head">
+                <div class="entry-label">${esc(e.label)}</div>
+                <button class="entry-remove" onclick="calendarDeleteEntry('${e.sessao_id}')" aria-label="Excluir">✕</button>
+              </div>
               <div class="entry-line">${e.distancia_km} km em ${e.tempo_min} min</div>
             </div>`;
         }
@@ -685,7 +872,10 @@ function renderCalendar() {
           .join("");
         return `
           <div class="day-entry">
-            <div class="entry-label">${esc(e.label)}</div>
+            <div class="entry-head">
+              <div class="entry-label">${esc(e.label)}</div>
+              <button class="entry-remove" onclick="calendarDeleteEntry('${e.sessao_id}')" aria-label="Excluir">✕</button>
+            </div>
             ${lines}
           </div>`;
       })
@@ -813,6 +1003,9 @@ function render() {
   const app = document.getElementById("app");
   let html;
   switch (state.screen) {
+    case "login": html = renderAuthScreen("login"); break;
+    case "signup": html = renderAuthScreen("signup"); break;
+    case "profile": html = renderProfile(); break;
     case "list": html = renderList(); break;
     case "create": html = renderCreate(); break;
     case "execution": html = renderExecution(); break;
@@ -827,7 +1020,7 @@ function render() {
   app.innerHTML = html;
 }
 
-goToList();
+boot();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

@@ -1,0 +1,8 @@
+backend/venv
+backend/treino.db
+backend/uploads
+**/__pycache__
+*.pyc
+.git
+project
+chats

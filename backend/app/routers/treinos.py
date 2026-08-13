@@ -3,6 +3,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
+from ..auth import get_current_user
 from ..database import get_db
 
 router = APIRouter(prefix="/api/treinos", tags=["treinos"])
@@ -31,9 +32,27 @@ def _ultimo_valor_exercicio(db: Session, treino_id: int, exercicio_id: int):
     return schemas.UltimoValor(peso=row.peso, series=row.series, reps=row.reps, data=row.data)
 
 
+def _obter_treino_do_usuario(db: Session, treino_id: int, usuario_id: int) -> models.Treino:
+    treino = (
+        db.query(models.Treino)
+        .filter(models.Treino.id == treino_id, models.Treino.usuario_id == usuario_id)
+        .first()
+    )
+    if not treino:
+        raise HTTPException(404, "Treino não encontrado")
+    return treino
+
+
 @router.get("", response_model=list[schemas.TreinoSummary])
-def listar_treinos(db: Session = Depends(get_db)):
-    treinos = db.query(models.Treino).order_by(models.Treino.ordem, models.Treino.id).all()
+def listar_treinos(
+    db: Session = Depends(get_db), usuario: models.Usuario = Depends(get_current_user)
+):
+    treinos = (
+        db.query(models.Treino)
+        .filter(models.Treino.usuario_id == usuario.id)
+        .order_by(models.Treino.ordem, models.Treino.id)
+        .all()
+    )
     out = []
     for t in treinos:
         out.append(
@@ -51,9 +70,19 @@ def listar_treinos(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=schemas.TreinoDetail, status_code=201)
-def criar_treino(payload: schemas.TreinoCreate, db: Session = Depends(get_db)):
-    max_ordem = db.query(func.max(models.Treino.ordem)).scalar() or 0
+def criar_treino(
+    payload: schemas.TreinoCreate,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    max_ordem = (
+        db.query(func.max(models.Treino.ordem))
+        .filter(models.Treino.usuario_id == usuario.id)
+        .scalar()
+        or 0
+    )
     treino = models.Treino(
+        usuario_id=usuario.id,
         nome=payload.nome.strip(),
         categoria=payload.categoria,
         tipo=payload.tipo,
@@ -116,18 +145,22 @@ def _treino_detail(db: Session, treino: models.Treino) -> schemas.TreinoDetail:
 
 
 @router.get("/{treino_id}", response_model=schemas.TreinoDetail)
-def obter_treino(treino_id: int, db: Session = Depends(get_db)):
-    treino = db.get(models.Treino, treino_id)
-    if not treino:
-        raise HTTPException(404, "Treino não encontrado")
+def obter_treino(
+    treino_id: int,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    treino = _obter_treino_do_usuario(db, treino_id, usuario.id)
     return _treino_detail(db, treino)
 
 
 @router.get("/{treino_id}/ultima-corrida", response_model=schemas.UltimaCorridaOut | None)
-def ultima_corrida(treino_id: int, db: Session = Depends(get_db)):
-    treino = db.get(models.Treino, treino_id)
-    if not treino:
-        raise HTTPException(404, "Treino não encontrado")
+def ultima_corrida(
+    treino_id: int,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    _obter_treino_do_usuario(db, treino_id, usuario.id)
     row = (
         db.query(models.RegistroCarga)
         .filter(models.RegistroCarga.treino_id == treino_id)
@@ -141,11 +174,12 @@ def ultima_corrida(treino_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{treino_id}/exercicios", response_model=schemas.TreinoExercicioOut, status_code=201)
 def adicionar_exercicio(
-    treino_id: int, payload: schemas.AdicionarExercicioTreino, db: Session = Depends(get_db)
+    treino_id: int,
+    payload: schemas.AdicionarExercicioTreino,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
 ):
-    treino = db.get(models.Treino, treino_id)
-    if not treino:
-        raise HTTPException(404, "Treino não encontrado")
+    _obter_treino_do_usuario(db, treino_id, usuario.id)
     nome = payload.nome.strip()
     if not nome:
         raise HTTPException(422, "Nome do exercício é obrigatório")
@@ -187,7 +221,13 @@ def adicionar_exercicio(
 
 
 @router.delete("/{treino_id}/exercicios/{treino_exercicio_id}", status_code=204)
-def remover_exercicio(treino_id: int, treino_exercicio_id: int, db: Session = Depends(get_db)):
+def remover_exercicio(
+    treino_id: int,
+    treino_exercicio_id: int,
+    db: Session = Depends(get_db),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    _obter_treino_do_usuario(db, treino_id, usuario.id)
     link = (
         db.query(models.TreinoExercicio)
         .filter(

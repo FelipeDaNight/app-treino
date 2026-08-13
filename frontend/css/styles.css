@@ -262,8 +262,14 @@ button, input {
 }
 .day-panel .day-label { font-size: 14px; font-weight: 700; color: var(--text); }
 .day-entry { display: flex; flex-direction: column; gap: 6px; }
+.day-entry .entry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .day-entry .entry-label { font-size: 13px; font-weight: 700; color: var(--accent); }
 .day-entry .entry-line { font-size: 13px; color: #b0b0b0; font-weight: 500; }
+.entry-remove {
+  width: 28px; height: 28px; border-radius: 8px; background: var(--surface-3);
+  border: 1px solid var(--border-danger); color: var(--danger); font-size: 13px; font-weight: 700;
+  flex-shrink: 0; cursor: pointer;
+}
 .day-empty { font-size: 13px; color: var(--text-faint); font-weight: 600; letter-spacing: 0.02em; }
 
 /* ---- admin screen ---- */
@@ -294,3 +300,34 @@ button, input {
 .toast.error { border-color: var(--border-danger); color: var(--danger); }
 
 .loading-note { padding: 40px 20px; text-align: center; color: var(--text-dimmer); font-size: 14px; }
+
+/* ---- avatar / perfil ---- */
+
+.avatar {
+  border-radius: 50%; object-fit: cover; display: flex; align-items: center;
+  justify-content: center; font-weight: 700; background: #2a2a2a; color: var(--text);
+  flex-shrink: 0;
+}
+.avatar.sm { width: 28px; height: 28px; font-size: 13px; }
+.avatar.lg { width: 96px; height: 96px; font-size: 32px; }
+.avatar-btn { padding: 0; overflow: hidden; }
+.avatar-upload { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.avatar-upload-hint { font-size: 13px; color: var(--accent); font-weight: 600; }
+
+/* ---- login / cadastro ---- */
+
+.auth-screen { justify-content: flex-start; }
+.auth-hero {
+  padding: 64px 20px 12px 20px; display: flex; flex-direction: column;
+  align-items: center; gap: 6px; text-align: center;
+}
+.auth-hero .title-xl { margin-top: 0; }
+.auth-logo { font-size: 40px; margin-bottom: 4px; }
+.auth-error {
+  background: var(--surface-3); border: 1px solid var(--border-danger); color: var(--danger);
+  padding: 12px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+}
+.link-btn {
+  background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 600;
+  cursor: pointer; text-decoration: underline; padding: 8px;
+}

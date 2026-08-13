@@ -1,10 +1,8 @@
-"""Seed inicial: replica os dados do protótipo (Treinos A-D + Corrida, com
-biblioteca de exercícios e um histórico recente de sessões), usando datas
-relativas a hoje para que o app não comece "vazio".
+"""Seed por usuário: cria os Treinos A-D + Corrida com sua biblioteca de
+exercícios (séries/reps/carga padrão) para uma conta recém-cadastrada,
+sem nenhuma sessão/registro de exemplo — todo o histórico de treinos deve
+vir de sessões reais que o usuário registrou.
 """
-
-import uuid
-from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -92,15 +90,14 @@ def _get_or_create_exercicio(db: Session, nome: str) -> models.Exercicio:
     return ex
 
 
-def seed_if_empty(db: Session) -> None:
-    if db.query(models.Treino).first() is not None:
-        return
-
-    treinos_by_nome: dict[str, models.Treino] = {}
-    exercicios_by_treino: dict[str, dict[str, models.TreinoExercicio]] = {}
+def seed_treinos_padrao(db: Session, usuario_id: int) -> None:
+    """Cria a biblioteca padrão de treinos para uma conta nova. Não commita —
+    quem chama decide quando persistir (normalmente junto da criação do
+    usuário, na mesma transação)."""
 
     for i, t in enumerate(TREINOS):
         treino = models.Treino(
+            usuario_id=usuario_id,
             nome=t["nome"],
             categoria=t["categoria"],
             tipo=t["tipo"],
@@ -109,8 +106,6 @@ def seed_if_empty(db: Session) -> None:
         )
         db.add(treino)
         db.flush()
-        treinos_by_nome[t["nome"]] = treino
-        exercicios_by_treino[t["nome"]] = {}
 
         for j, (nome, carga, series, reps) in enumerate(t["exercicios"]):
             exercicio = _get_or_create_exercicio(db, nome)
@@ -123,82 +118,3 @@ def seed_if_empty(db: Session) -> None:
                 carga_padrao=carga,
             )
             db.add(link)
-            exercicios_by_treino[t["nome"]][nome] = link
-
-    db.flush()
-
-    today = date.today()
-
-    def add_sessao(treino_nome: str, dias_atras: int, itens: list[tuple[str, float, int, int]]):
-        treino = treinos_by_nome[treino_nome]
-        data = today - timedelta(days=dias_atras)
-        sessao_id = uuid.uuid4().hex
-        for nome, peso, series, reps in itens:
-            exercicio = _get_or_create_exercicio(db, nome)
-            db.add(
-                models.RegistroCarga(
-                    treino_id=treino.id,
-                    exercicio_id=exercicio.id,
-                    sessao_id=sessao_id,
-                    data=data,
-                    peso=peso,
-                    series=series,
-                    reps=reps,
-                )
-            )
-
-    def add_corrida(dias_atras: int, distancia_km: float, tempo_min: int):
-        treino = treinos_by_nome["Corrida"]
-        data = today - timedelta(days=dias_atras)
-        db.add(
-            models.RegistroCarga(
-                treino_id=treino.id,
-                exercicio_id=None,
-                sessao_id=uuid.uuid4().hex,
-                data=data,
-                distancia_km=distancia_km,
-                tempo_min=tempo_min,
-            )
-        )
-
-    add_sessao(
-        "Treino A - Peito e Tríceps",
-        9,
-        [
-            ("Supino reto com barra", 40, 4, 10),
-            ("Supino inclinado com halteres", 16, 3, 12),
-            ("Crucifixo com halteres", 14, 3, 12),
-            ("Tríceps corda", 20, 3, 15),
-        ],
-    )
-    add_corrida(8, 5, 32)
-    add_sessao(
-        "Treino B - Pernas",
-        6,
-        [
-            ("Agachamento livre", 60, 4, 10),
-            ("Leg press", 90, 4, 12),
-            ("Cadeira extensora", 35, 3, 15),
-        ],
-    )
-    add_sessao(
-        "Treino C - Costas e Bíceps",
-        4,
-        [
-            ("Puxada frontal", 45, 4, 10),
-            ("Remada curvada", 40, 4, 10),
-            ("Rosca direta", 14, 3, 12),
-        ],
-    )
-    add_corrida(4, 3, 18)
-    add_sessao(
-        "Treino D - Ombro e Abdômen",
-        2,
-        [
-            ("Desenvolvimento com halteres", 12, 4, 10),
-            ("Elevação lateral", 8, 3, 15),
-            ("Abdominal supra", 0, 3, 20),
-        ],
-    )
-
-    db.commit()
