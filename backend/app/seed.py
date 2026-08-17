@@ -4,6 +4,7 @@ sem nenhuma sessão/registro de exemplo — todo o histórico de treinos deve
 vir de sessões reais que o usuário registrou.
 """
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
@@ -81,7 +82,11 @@ TREINOS = [
 
 
 def _get_or_create_exercicio(db: Session, nome: str) -> models.Exercicio:
-    ex = db.query(models.Exercicio).filter(models.Exercicio.nome == nome).first()
+    ex = (
+        db.query(models.Exercicio)
+        .filter(func.lower(models.Exercicio.nome) == nome.lower())
+        .first()
+    )
     if ex:
         return ex
     ex = models.Exercicio(nome=nome)

@@ -178,7 +178,10 @@ def excluir_sessao(
     usuario: models.Usuario = Depends(get_current_user),
 ):
     if sessao_id.startswith("registro-"):
-        registro_id = int(sessao_id.removeprefix("registro-"))
+        try:
+            registro_id = int(sessao_id.removeprefix("registro-"))
+        except ValueError:
+            raise HTTPException(404, "Sessão não encontrada")
         query = db.query(models.RegistroCarga).filter(
             models.RegistroCarga.id == registro_id, models.RegistroCarga.usuario_id == usuario.id
         )

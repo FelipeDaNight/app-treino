@@ -29,8 +29,45 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-body { overscroll-behavior-y: none; }
+body { overscroll-behavior-y: none; position: relative; }
 ::-webkit-scrollbar { display: none; }
+
+/* ---- glow ambiente de fundo ---- */
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+body::before {
+  width: 70vmax; height: 70vmax;
+  left: -20vmax; top: -25vmax;
+  background: radial-gradient(circle, rgba(255, 122, 48, 0.20) 0%, rgba(255, 122, 48, 0) 68%);
+  animation: glow-drift-1 26s ease-in-out infinite alternate;
+}
+body::after {
+  width: 60vmax; height: 60vmax;
+  right: -22vmax; bottom: -20vmax;
+  background: radial-gradient(circle, rgba(255, 154, 60, 0.14) 0%, rgba(255, 154, 60, 0) 70%);
+  animation: glow-drift-2 32s ease-in-out infinite alternate;
+}
+
+@keyframes glow-drift-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(6vmax, 8vmax) scale(1.12); }
+}
+@keyframes glow-drift-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-7vmax, -6vmax) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; }
+}
 
 button, input {
   font-family: inherit;
@@ -43,9 +80,10 @@ button, input {
   min-height: 100dvh;
   margin: 0 auto;
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: rgba(18, 18, 18, 0.94);
 }
 
 .screen { display: flex; flex-direction: column; min-height: 100dvh; }
@@ -80,10 +118,16 @@ button, input {
 .workout-list { display: flex; flex-direction: column; gap: 14px; padding: 20px; flex: 1; }
 
 .workout-card {
-  background: var(--surface); border-radius: var(--radius-lg); padding: 18px 20px;
-  display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--border);
+  background: var(--surface); border-radius: var(--radius-lg); padding: 16px 18px;
+  display: flex; flex-direction: row; align-items: center; gap: 14px; border: 1px solid var(--border);
   cursor: pointer; text-align: left; width: 100%; appearance: none;
 }
+.workout-card .card-cover {
+  width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0; background: #241a10;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.workout-card .card-cover img { width: 34px; height: 34px; }
+.workout-card .card-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
 .workout-card .name { font-size: 17px; line-height: 1.4; font-weight: 700; color: var(--text); }
 .workout-card .cat { font-size: 13px; line-height: 1.3; color: var(--text-dim); font-weight: 500; }
 .workout-card .meta-row { display: flex; align-items: center; gap: 16px; margin-top: 4px; flex-wrap: wrap; }
@@ -94,7 +138,7 @@ button, input {
 
 .sticky-footer {
   position: sticky; bottom: 0;
-  background: linear-gradient(to top, #121212 60%, transparent);
+  background: linear-gradient(to top, rgba(18, 18, 18, 0.94) 60%, transparent);
   padding: 24px 20px calc(28px + env(safe-area-inset-bottom)) 20px;
   display: flex; justify-content: center;
 }
@@ -147,7 +191,7 @@ button, input {
   font-size: 10px; font-weight: 600; overflow: hidden;
 }
 .thumb.sm { width: 52px; height: 52px; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumb img { width: 60%; height: 60%; object-fit: contain; }
 
 .ex-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .ex-name { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; }

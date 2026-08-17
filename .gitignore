@@ -3,6 +3,7 @@ backend/__pycache__/
 backend/app/__pycache__/
 backend/app/routers/__pycache__/
 backend/treino.db
+backend/uploads/
 **/__pycache__/
 *.pyc
 .DS_Store

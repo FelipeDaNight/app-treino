@@ -2,6 +2,7 @@ import os
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -23,7 +24,7 @@ def signup(payload: schemas.UsuarioCreate, request: Request, db: Session = Depen
 
     existente = (
         db.query(models.Usuario)
-        .filter(models.Usuario.nome_usuario.ilike(nome_usuario))
+        .filter(func.lower(models.Usuario.nome_usuario) == nome_usuario.lower())
         .first()
     )
     if existente:
@@ -49,7 +50,7 @@ def signup(payload: schemas.UsuarioCreate, request: Request, db: Session = Depen
 def login(payload: schemas.UsuarioLogin, request: Request, db: Session = Depends(get_db)):
     usuario = (
         db.query(models.Usuario)
-        .filter(models.Usuario.nome_usuario.ilike(payload.nome_usuario.strip()))
+        .filter(func.lower(models.Usuario.nome_usuario) == payload.nome_usuario.strip().lower())
         .first()
     )
     if not usuario or not verify_password(payload.senha, usuario.senha_hash):

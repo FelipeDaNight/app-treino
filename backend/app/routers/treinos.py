@@ -75,6 +75,10 @@ def criar_treino(
     db: Session = Depends(get_db),
     usuario: models.Usuario = Depends(get_current_user),
 ):
+    nome = payload.nome.strip()
+    if not nome:
+        raise HTTPException(422, "Nome do treino é obrigatório")
+
     max_ordem = (
         db.query(func.max(models.Treino.ordem))
         .filter(models.Treino.usuario_id == usuario.id)
@@ -83,7 +87,7 @@ def criar_treino(
     )
     treino = models.Treino(
         usuario_id=usuario.id,
-        nome=payload.nome.strip(),
+        nome=nome,
         categoria=payload.categoria,
         tipo=payload.tipo,
         duracao_min=payload.duracao_min,
@@ -96,7 +100,11 @@ def criar_treino(
         nome = item.nome.strip()
         if not nome:
             continue
-        exercicio = db.query(models.Exercicio).filter(models.Exercicio.nome == nome).first()
+        exercicio = (
+            db.query(models.Exercicio)
+            .filter(func.lower(models.Exercicio.nome) == nome.lower())
+            .first()
+        )
         if not exercicio:
             exercicio = models.Exercicio(nome=nome)
             db.add(exercicio)
@@ -184,7 +192,11 @@ def adicionar_exercicio(
     if not nome:
         raise HTTPException(422, "Nome do exercício é obrigatório")
 
-    exercicio = db.query(models.Exercicio).filter(models.Exercicio.nome == nome).first()
+    exercicio = (
+        db.query(models.Exercicio)
+        .filter(func.lower(models.Exercicio.nome) == nome.lower())
+        .first()
+    )
     if not exercicio:
         exercicio = models.Exercicio(nome=nome)
         db.add(exercicio)

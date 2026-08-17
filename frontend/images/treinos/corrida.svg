@@ -1,0 +1,11 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Corredor em movimento -->
+  <circle cx="58" cy="22" r="7" fill="#ff7a30"/>
+  <path d="M 54 29 L 45 55" stroke="#ff7a30" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M 45 55 L 53 68 L 40 82" stroke="#ff7a30" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 45 55 L 60 62 L 74 57" stroke="#ff7a30" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 50 33 L 36 40 L 29 30" stroke="#ff7a30" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 51 36 L 64 47 L 70 58" stroke="#ff7a30" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="10" y1="45" x2="20" y2="45" stroke="#ff7a30" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+  <line x1="8" y1="55" x2="16" y2="55" stroke="#ff7a30" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+</svg>

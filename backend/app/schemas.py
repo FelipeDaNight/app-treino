@@ -39,16 +39,16 @@ class ExercicioOut(BaseModel):
 
 class NovoExercicioTreino(BaseModel):
     nome: str
-    series_padrao: int = 3
-    reps_padrao: int = 12
-    carga_padrao: float = 0
+    series_padrao: int = Field(default=3, ge=1)
+    reps_padrao: int = Field(default=12, ge=1)
+    carga_padrao: float = Field(default=0, ge=0)
 
 
 class TreinoCreate(BaseModel):
-    nome: str
+    nome: str = Field(min_length=1)
     categoria: str
     tipo: str = "forca"
-    duracao_min: Optional[int] = None
+    duracao_min: Optional[int] = Field(default=None, ge=0)
     exercicios: list[NovoExercicioTreino] = []
 
 
@@ -108,9 +108,9 @@ class TreinoDetail(BaseModel):
 
 class AdicionarExercicioTreino(BaseModel):
     nome: str
-    series_padrao: int = 3
-    reps_padrao: int = 12
-    carga_padrao: float = 0
+    series_padrao: int = Field(default=3, ge=1)
+    reps_padrao: int = Field(default=12, ge=1)
+    carga_padrao: float = Field(default=0, ge=0)
 
 
 # ---------- Registro de sessão (força) ----------
@@ -118,9 +118,9 @@ class AdicionarExercicioTreino(BaseModel):
 
 class ItemSessao(BaseModel):
     treino_exercicio_id: int
-    peso: float = 0
-    series: int = 1
-    reps: int = 1
+    peso: float = Field(default=0, ge=0)
+    series: int = Field(default=1, ge=1)
+    reps: int = Field(default=1, ge=1)
 
 
 class SessaoCreate(BaseModel):
@@ -135,8 +135,8 @@ class SessaoCreate(BaseModel):
 class CorridaCreate(BaseModel):
     treino_id: int
     data: Optional[date] = None
-    distancia_km: float
-    tempo_min: int
+    distancia_km: float = Field(ge=0)
+    tempo_min: int = Field(ge=0)
 
 
 # ---------- Calendário ----------

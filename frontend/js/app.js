@@ -72,6 +72,19 @@ function esc(str) {
   }[c]));
 }
 
+const TREINO_IMAGENS = {
+  "Treino A - Peito e Tríceps": "/images/treinos/treino-a.svg",
+  "Treino B - Pernas": "/images/treinos/treino-b.svg",
+  "Treino C - Costas e Bíceps": "/images/treinos/treino-c.svg",
+  "Treino D - Ombro e Abdômen": "/images/treinos/treino-d.svg",
+  "Corrida": "/images/treinos/corrida.svg",
+};
+const IMAGEM_GENERICA = "/images/treinos/generic.svg";
+
+function treinoImageUrl(nome) {
+  return TREINO_IMAGENS[nome] || IMAGEM_GENERICA;
+}
+
 function avatarHtml(usuario, sizeClass) {
   if (usuario && usuario.foto_perfil_url) {
     return `<img src="${esc(usuario.foto_perfil_url)}" class="avatar ${sizeClass}" alt="Foto de perfil" />`;
@@ -589,14 +602,17 @@ function renderList() {
       const action = w.tipo === "corrida" ? `goToRunExecution(${w.id})` : `goToExecution(${w.id})`;
       return `
         <button class="workout-card" onclick="${action}">
-          <div class="name">${esc(w.nome)}</div>
-          <div class="cat">${esc(w.categoria)}</div>
-          <div class="meta-row">
-            <span>${esc(meta)}</span>
-            <div class="dot"></div>
-            <span>~${w.duracao_min ?? "--"} min</span>
-            <div class="dot"></div>
-            <span>${humanizeDate(w.ultima_data)}</span>
+          <div class="card-cover"><img src="${treinoImageUrl(w.nome)}" alt="" /></div>
+          <div class="card-body">
+            <div class="name">${esc(w.nome)}</div>
+            <div class="cat">${esc(w.categoria)}</div>
+            <div class="meta-row">
+              <span>${esc(meta)}</span>
+              <div class="dot"></div>
+              <span>~${w.duracao_min ?? "--"} min</span>
+              <div class="dot"></div>
+              <span>${humanizeDate(w.ultima_data)}</span>
+            </div>
           </div>
         </button>`;
     })
@@ -633,7 +649,7 @@ function renderCreate() {
   const rows = d.exercicios
     .map((ex, i) => `
       <div class="ex-row">
-        <div class="thumb">Foto</div>
+        <div class="thumb"><img src="${IMAGEM_GENERICA}" alt="" /></div>
         <div class="ex-info">
           <div class="ex-name">${esc(ex.nome)}</div>
           <div class="ex-sub">${ex.series_padrao}x${ex.reps_padrao} · ${ex.carga_padrao} kg</div>
@@ -705,7 +721,7 @@ function renderCreate() {
           ${addForm}
         </div>
       </div>
-      <div class="sticky-footer" style="background:linear-gradient(to top,#121212 60%,transparent)">
+      <div class="sticky-footer">
         <button class="btn-primary" onclick="createSaveTreino()">Salvar treino</button>
       </div>
     </div>`;
@@ -756,7 +772,7 @@ function renderExecution() {
       return `
         <div class="exec-card ${it.selected ? "selected" : ""}">
           <button class="exec-card-head" onclick="execToggle(${it.treino_exercicio_id})">
-            <div class="thumb sm">Foto</div>
+            <div class="thumb sm"><img src="${IMAGEM_GENERICA}" alt="" /></div>
             <div class="ex-info">
               <div class="ex-name">${esc(it.nome)}</div>
               <div class="ex-sub">${esc(lastInfo)}</div>
