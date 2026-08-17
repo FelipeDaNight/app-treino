@@ -1,25 +1,59 @@
-# CODING AGENTS: READ THIS FIRST
+# App de Treino
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+App de treino de academia/corrida, mobile-first, com backend real (não é
+mais um protótipo em mock). Cada usuário cria sua conta, monta seus
+treinos, registra o que fez em cada sessão (peso, séries, reps ou
+distância/tempo pra corrida) e acompanha tudo por um calendário. Funciona
+como PWA — dá pra instalar na tela de início do iPhone e abrir sem barra
+do Safari.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+## Stack
 
-## What you should do — IMPORTANT
+- **Backend:** FastAPI + SQLAlchemy + SQLite. Autenticação por sessão em
+  cookie assinado (`bcrypt` pro hash de senha).
+- **Frontend:** HTML/CSS/JS puro (sem framework, sem build step) — servido
+  como estático pelo próprio FastAPI. Tema escuro com laranja de destaque.
+- **Deploy:** Dockerfile + `fly.toml` prontos pro Fly.io (plano grátis com
+  volume persistente).
 
-**Read the chat transcripts first.** There are 2 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+## Funcionalidades
 
-**Read `project/App de Treino.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+- Login e cadastro — cada conta só vê os próprios treinos e histórico.
+- Montar treinos (nome, categoria, exercícios com séries/reps/carga,
+  reordenáveis).
+- Executar um treino do dia: escolhe os exercícios feitos, ajusta peso/
+  séries/reps com steppers de toque, salva a sessão.
+- Registrar corrida (distância + tempo).
+- Calendário por mês/ano: dias com treino ficam marcados; clicar num dia
+  mostra o que foi feito, com opção de excluir o registro.
+- Administrar exercícios: criar novos exercícios e vinculá-los a um treino.
+- Perfil: foto e logoff.
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Rodando localmente
 
-## About the design files
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+Abra `http://localhost:8000` — a primeira tela é login/cadastro. Detalhes
+de configuração (variáveis de ambiente, deploy no Fly.io, estrutura de
+dados, endpoints) estão em [`backend/README.md`](backend/README.md).
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+## Estrutura do repositório
 
-## Bundle contents
+```
+backend/    API FastAPI + banco SQLite
+frontend/   HTML/CSS/JS estático servido pelo backend
+Dockerfile  imagem pra deploy
+fly.toml    configuração do Fly.io (volume persistente)
+project/    protótipo visual original (Claude Design) — histórico, não é o app real
+chats/      transcrição das conversas de design do protótipo — histórico
+```
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Protótipo de app de treino` project files (HTML prototypes, assets, components)
+`project/` e `chats/` são o material original do protótipo visual que deu
+origem a este app; ficam aqui como referência de como o design foi
+pensado, mas o código que roda de verdade é `backend/` + `frontend/`.
