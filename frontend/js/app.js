@@ -132,6 +132,28 @@ function avatarHtml(usuario, sizeClass) {
   return `<div class="avatar avatar-placeholder ${sizeClass}">${esc(inicial)}</div>`;
 }
 
+function fotoSessaoPickerHtml({ fotoUrl, fotoUploading, onSelect, onRemove }) {
+  if (fotoUploading) {
+    return `<div class="foto-sessao-picker"><div class="foto-sessao-uploading">Enviando foto…</div></div>`;
+  }
+  if (fotoUrl) {
+    return `
+      <div class="foto-sessao-picker">
+        <div class="foto-sessao-preview">
+          <img src="${esc(fotoUrl)}" alt="Foto do treino" />
+          <button class="foto-sessao-remove" onclick="${onRemove}()" aria-label="Remover foto">✕</button>
+        </div>
+      </div>`;
+  }
+  return `
+    <div class="foto-sessao-picker">
+      <label class="foto-sessao-add">
+        <span style="font-size:16px;line-height:1">📷</span> Adicionar foto (opcional)
+        <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="${onSelect}(this)" />
+      </label>
+    </div>`;
+}
+
 // ---------------------------------------------------------------------
 // Autenticação
 // ---------------------------------------------------------------------
@@ -262,7 +284,10 @@ async function goToExecution(treinoId) {
       series: ex.ultimo ? ex.ultimo.series : ex.series_padrao,
       reps: ex.ultimo ? ex.ultimo.reps : ex.reps_padrao,
     }));
-    setState({ screen: "execution", execution: { treino, items, infoExpandedId: null } });
+    setState({
+      screen: "execution",
+      execution: { treino, items, infoExpandedId: null, fotoUrl: null, fotoUploading: false },
+    });
   } catch (e) {
     showToast(e.message, true);
     goToList();
@@ -281,6 +306,8 @@ async function goToRunExecution(treinoId) {
         ultimo,
         distancia_km: ultimo ? ultimo.distancia_km : 5,
         tempo_min: ultimo ? ultimo.tempo_min : 30,
+        fotoUrl: null,
+        fotoUploading: false,
       },
     });
   } catch (e) {
@@ -490,6 +517,23 @@ function execStep(treinoExercicioId, field, delta, min) {
   setState({ execution: { ...state.execution, items } });
 }
 
+async function onExecFotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  setState({ execution: { ...state.execution, fotoUploading: true } });
+  try {
+    const { foto_url } = await Api.uploadFotoSessao(file);
+    setState({ execution: { ...state.execution, fotoUrl: foto_url, fotoUploading: false } });
+  } catch (e) {
+    setState({ execution: { ...state.execution, fotoUploading: false } });
+    showToast(e.message, true);
+  }
+}
+
+function removeExecFoto() {
+  setState({ execution: { ...state.execution, fotoUrl: null } });
+}
+
 async function execSave() {
   const selected = state.execution.items.filter((it) => it.selected);
   if (selected.length === 0) {
@@ -505,6 +549,7 @@ async function execSave() {
         series: it.series,
         reps: it.reps,
       })),
+      foto_url: state.execution.fotoUrl,
     });
     showToast("Treino de hoje salvo!");
     goToList();
@@ -523,12 +568,30 @@ function runStep(field, delta, min) {
   setState({ runDraft });
 }
 
+async function onRunFotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  setState({ runDraft: { ...state.runDraft, fotoUploading: true } });
+  try {
+    const { foto_url } = await Api.uploadFotoSessao(file);
+    setState({ runDraft: { ...state.runDraft, fotoUrl: foto_url, fotoUploading: false } });
+  } catch (e) {
+    setState({ runDraft: { ...state.runDraft, fotoUploading: false } });
+    showToast(e.message, true);
+  }
+}
+
+function removeRunFoto() {
+  setState({ runDraft: { ...state.runDraft, fotoUrl: null } });
+}
+
 async function runSave() {
   try {
     await Api.salvarCorrida({
       treino_id: state.runDraft.treino.id,
       distancia_km: state.runDraft.distancia_km,
       tempo_min: state.runDraft.tempo_min,
+      foto_url: state.runDraft.fotoUrl,
     });
     showToast("Corrida salva!");
     goToList();
@@ -864,6 +927,12 @@ function renderExecution() {
           <span class="count">${selectedCount} selecionados</span>
         </div>
         <div class="exec-list">${items || `<div class="empty-state">Nenhum exercício cadastrado. Adicione em Administrar exercícios.</div>`}</div>
+        ${fotoSessaoPickerHtml({
+          fotoUrl: ex.fotoUrl,
+          fotoUploading: ex.fotoUploading,
+          onSelect: "onExecFotoSelected",
+          onRemove: "removeExecFoto",
+        })}
       </div>
       <div class="sticky-footer" style="padding-top:0">
         <button class="btn-primary" onclick="execSave()">Salvar treino de hoje</button>
@@ -904,6 +973,12 @@ function renderRunExecution() {
             <button class="stepper-btn plus" onclick="runStep('tempo_min',1,0)">+</button>
           </div>
         </div>
+        ${fotoSessaoPickerHtml({
+          fotoUrl: r.fotoUrl,
+          fotoUploading: r.fotoUploading,
+          onSelect: "onRunFotoSelected",
+          onRemove: "removeRunFoto",
+        })}
       </div>
       <div class="sticky-footer" style="padding-top:0">
         <button class="btn-primary" onclick="runSave()">Salvar corrida</button>
@@ -937,6 +1012,9 @@ function renderCalendar() {
   if (c.dia && c.dia.entradas.length > 0) {
     panelBody = c.dia.entradas
       .map((e) => {
+        const fotoHtml = e.foto_url
+          ? `<img class="entry-foto" src="${esc(e.foto_url)}" alt="Foto do treino" />`
+          : "";
         if (e.tipo === "corrida") {
           return `
             <div class="day-entry">
@@ -945,6 +1023,7 @@ function renderCalendar() {
                 <button class="entry-remove" onclick="calendarDeleteEntry('${e.sessao_id}')" aria-label="Excluir">✕</button>
               </div>
               <div class="entry-line">${e.distancia_km} km em ${e.tempo_min} min</div>
+              ${fotoHtml}
             </div>`;
         }
         const lines = e.exercicios
@@ -957,6 +1036,7 @@ function renderCalendar() {
               <button class="entry-remove" onclick="calendarDeleteEntry('${e.sessao_id}')" aria-label="Excluir">✕</button>
             </div>
             ${lines}
+            ${fotoHtml}
           </div>`;
       })
       .join("");

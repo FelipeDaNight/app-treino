@@ -3,12 +3,13 @@ import uuid
 from collections import OrderedDict
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import get_current_user
 from ..database import get_db
+from ..uploads import remover_imagem_upload, salvar_imagem_upload
 
 router = APIRouter(prefix="/api/registros", tags=["registros"])
 
@@ -22,6 +23,15 @@ def _obter_treino_do_usuario(db: Session, treino_id: int, usuario_id: int) -> mo
     if not treino:
         raise HTTPException(404, "Treino não encontrado")
     return treino
+
+
+@router.post("/foto", response_model=schemas.FotoUploadOut)
+async def upload_foto_sessao(
+    arquivo: UploadFile = File(...),
+    usuario: models.Usuario = Depends(get_current_user),
+):
+    foto_url = await salvar_imagem_upload(arquivo, f"sessao-{usuario.id}")
+    return schemas.FotoUploadOut(foto_url=foto_url)
 
 
 @router.post("/sessao", response_model=list[int], status_code=201)
@@ -57,6 +67,7 @@ def salvar_sessao(
             peso=item.peso,
             series=item.series,
             reps=item.reps,
+            foto_url=payload.foto_url,
         )
         db.add(registro)
         db.flush()
@@ -83,6 +94,7 @@ def salvar_corrida(
         data=data,
         distancia_km=payload.distancia_km,
         tempo_min=payload.tempo_min,
+        foto_url=payload.foto_url,
     )
     db.add(registro)
     db.commit()
@@ -146,6 +158,7 @@ def registros_do_dia(
                     tipo="corrida",
                     distancia_km=primeiro.distancia_km,
                     tempo_min=primeiro.tempo_min,
+                    foto_url=primeiro.foto_url,
                 )
             )
         else:
@@ -165,6 +178,7 @@ def registros_do_dia(
                     label=treino.nome,
                     tipo="forca",
                     exercicios=linhas,
+                    foto_url=primeiro.foto_url,
                 )
             )
 
@@ -190,8 +204,14 @@ def excluir_sessao(
             models.RegistroCarga.sessao_id == sessao_id, models.RegistroCarga.usuario_id == usuario.id
         )
 
-    apagados = query.delete(synchronize_session=False)
-    if apagados == 0:
+    linhas = query.all()
+    if not linhas:
         raise HTTPException(404, "Sessão não encontrada")
+    foto_url = linhas[0].foto_url
+
+    for linha in linhas:
+        db.delete(linha)
     db.commit()
+
+    remover_imagem_upload(foto_url)
     return None

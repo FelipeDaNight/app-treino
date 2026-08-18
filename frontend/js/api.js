@@ -58,5 +58,10 @@ const Api = (() => {
     registrosDoDia: (data) => request(`/api/registros/dia?data=${data}`),
     excluirSessao: (sessaoId) =>
       request(`/api/registros/sessao/${encodeURIComponent(sessaoId)}`, { method: "DELETE" }),
+    uploadFotoSessao: (file) => {
+      const form = new FormData();
+      form.append("arquivo", file);
+      return request("/api/registros/foto", { method: "POST", body: form });
+    },
   };
 })();

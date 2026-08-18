@@ -127,6 +127,7 @@ class SessaoCreate(BaseModel):
     treino_id: int
     data: Optional[date] = None
     itens: list[ItemSessao]
+    foto_url: Optional[str] = None
 
 
 # ---------- Registro de corrida ----------
@@ -137,6 +138,14 @@ class CorridaCreate(BaseModel):
     data: Optional[date] = None
     distancia_km: float = Field(ge=0)
     tempo_min: int = Field(ge=0)
+    foto_url: Optional[str] = None
+
+
+# ---------- Upload de foto de sessão ----------
+
+
+class FotoUploadOut(BaseModel):
+    foto_url: str
 
 
 # ---------- Calendário ----------
@@ -157,6 +166,7 @@ class DiaEntrada(BaseModel):
     exercicios: list[DiaExercicioLinha] = []
     distancia_km: Optional[float] = None
     tempo_min: Optional[int] = None
+    foto_url: Optional[str] = None
 
 
 class DiaOut(BaseModel):

@@ -90,6 +90,7 @@ class RegistroCarga(Base):
     reps = Column(Integer, nullable=True)
     distancia_km = Column(Float, nullable=True)
     tempo_min = Column(Integer, nullable=True)
+    foto_url = Column(String, nullable=True)
     criado_em = Column(DateTime, default=datetime.utcnow)
 
     treino = relationship("Treino", back_populates="registros")

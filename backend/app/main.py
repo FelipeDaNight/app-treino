@@ -8,9 +8,11 @@ from fastapi.staticfiles import StaticFiles
 
 from . import models
 from .database import UPLOADS_DIR, engine
+from .migrate import rodar_migracoes
 from .routers import auth, exercicios, registros, treinos
 
 models.Base.metadata.create_all(bind=engine)
+rodar_migracoes(engine)
 
 app = FastAPI(title="App de Treino API")
 
