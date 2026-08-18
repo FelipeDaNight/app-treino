@@ -254,7 +254,18 @@ button, input {
 .exec-list { display: flex; flex-direction: column; gap: 12px; }
 .exec-card { background: var(--surface); border-radius: 18px; border: 1px solid var(--border); overflow: hidden; }
 .exec-card.selected { border-color: var(--accent); }
-.exec-card-head { display: flex; gap: 12px; align-items: center; padding: 14px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+.exec-card-head { display: flex; gap: 8px; align-items: center; padding: 14px; }
+.exec-thumb-name {
+  display: flex; gap: 12px; align-items: center; cursor: pointer; border: none;
+  background: none; flex: 1; min-width: 0; text-align: left; padding: 0;
+}
+.check-toggle { border: none; background: none; cursor: pointer; padding: 6px; flex-shrink: 0; }
+.exec-info-panel {
+  display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
+  padding: 4px 16px 18px 16px; border-top: 1px solid var(--border);
+}
+.exec-info-panel img { width: 96px; height: 96px; }
+.exec-info-panel .dica { font-size: 13px; color: #b0b0b0; font-weight: 500; line-height: 1.4; }
 .check {
   width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; display: flex;
   align-items: center; justify-content: center; font-size: 16px; font-weight: 800;

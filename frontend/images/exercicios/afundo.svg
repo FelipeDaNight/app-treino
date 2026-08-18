@@ -1,0 +1,11 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <line x1="30" y1="20" x2="24" y2="50" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <line x1="24" y1="50" x2="18" y2="82" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <line x1="30" y1="20" x2="55" y2="45" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <line x1="55" y1="45" x2="50" y2="82" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <line x1="55" y1="45" x2="82" y2="55" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <line x1="8" y1="82" x2="28" y2="82" stroke="#ff7a30" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <line x1="40" y1="82" x2="60" y2="82" stroke="#ff7a30" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <line x1="30" y1="45" x2="30" y2="65" stroke="#ff7a30" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 6" opacity="0.85"/>
+  <polygon points="30,68 24,58 36,58" fill="#ff7a30"/>
+</svg>

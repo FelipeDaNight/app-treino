@@ -85,6 +85,45 @@ function treinoImageUrl(nome) {
   return TREINO_IMAGENS[nome] || IMAGEM_GENERICA;
 }
 
+const EXERCICIO_INFO = {
+  "Supino reto com barra": { padrao: "supino", dica: "Desça a barra controlada até tocar o peito e empurre até estender os braços." },
+  "Supino inclinado com halteres": { padrao: "supino", dica: "Banco a 30-45°; desça os halteres até a altura do peito e empurre pra cima." },
+  "Crucifixo com halteres": { padrao: "voador", dica: "Cotovelos levemente flexionados; abra os braços até alongar o peito e feche de volta." },
+  "Crossover no cabo": { padrao: "voador", dica: "Puxe os cabos num arco à frente do corpo, cruzando as mãos no final do movimento." },
+  "Supino máquina": { padrao: "supino", dica: "Empurre os apoios pra frente até estender os braços, sem travar os cotovelos." },
+  "Tríceps corda": { padrao: "triceps", dica: "Cotovelos fixos junto ao corpo; estenda os braços puxando a corda pra baixo." },
+  "Tríceps testa": { padrao: "triceps", dica: "Deitado, desça a barra até perto da testa flexionando só o cotovelo, depois estenda." },
+  "Mergulho no banco": { padrao: "triceps", dica: "Mãos no banco atrás do corpo; desça flexionando os cotovelos e empurre de volta." },
+
+  "Agachamento livre": { padrao: "agachamento", dica: "Desça como se fosse sentar, joelhos alinhados com os pés, e suba empurrando o chão." },
+  "Leg press": { padrao: "legpress", dica: "Empurre a plataforma estendendo as pernas, sem travar os joelhos no topo." },
+  "Cadeira extensora": { padrao: "extensora", dica: "Estenda os joelhos até quase esticar as pernas e volte controlado." },
+  "Cadeira flexora": { padrao: "flexora", dica: "Flexione os joelhos puxando o apoio em direção aos glúteos e volte devagar." },
+  "Afundo com halteres": { padrao: "afundo", dica: "Dê um passo à frente e desça até o joelho de trás quase tocar o chão." },
+  "Stiff com barra": { padrao: "stiff", dica: "Com as pernas quase retas, desça a barra rente às pernas mantendo as costas retas." },
+  "Panturrilha em pé": { padrao: "panturrilha", dica: "Suba na ponta dos pés o máximo que conseguir e desça controlado até alongar." },
+  "Panturrilha sentado": { padrao: "panturrilha", dica: "Sentado, empurre o peso com a ponta dos pés e desça controlado." },
+
+  "Puxada frontal": { padrao: "puxada", dica: "Puxe a barra até a altura do peito, levando os cotovelos pra baixo e pra trás." },
+  "Remada curvada": { padrao: "remada", dica: "Tronco inclinado à frente, puxe a barra em direção ao abdômen apertando as costas." },
+  "Remada unilateral": { padrao: "remada", dica: "Apoiado no banco, puxe o halter até a altura do quadril, cotovelo rente ao corpo." },
+  "Puxada aberta": { padrao: "puxada", dica: "Pegada mais aberta que a puxada frontal; puxe a barra até o peito controlando a volta." },
+  "Rosca direta": { padrao: "rosca", dica: "Cotovelos fixos, flexione levando a barra até os ombros e desça controlado." },
+  "Rosca alternada": { padrao: "rosca", dica: "Flexione um braço de cada vez, girando o pulso pra fora no topo do movimento." },
+  "Rosca martelo": { padrao: "rosca", dica: "Igual à rosca direta, mas com a palma da mão virada pra dentro o tempo todo." },
+
+  "Desenvolvimento com halteres": { padrao: "desenvolvimento", dica: "Empurre os halteres pra cima até quase estender os braços por cima da cabeça." },
+  "Elevação lateral": { padrao: "elevacao", dica: "Braços levemente flexionados, eleve até a altura dos ombros e desça controlado." },
+  "Elevação frontal": { padrao: "elevacao", dica: "Eleve o halter à frente do corpo até a altura dos ombros e desça devagar." },
+  "Encolhimento de trapézio": { padrao: "encolhimento", dica: "Eleve os ombros em direção às orelhas sem usar os braços, e desça controlado." },
+  "Abdominal supra": { padrao: "abdominal", dica: "Flexione o tronco levando as costelas em direção ao quadril, sem puxar o pescoço." },
+  "Prancha isométrica": { padrao: "prancha", dica: "Corpo reto da cabeça aos pés, abdômen contraído, segure a posição respirando normal." },
+};
+
+function exercicioInfo(nome) {
+  return EXERCICIO_INFO[nome] || null;
+}
+
 function avatarHtml(usuario, sizeClass) {
   if (usuario && usuario.foto_perfil_url) {
     return `<img src="${esc(usuario.foto_perfil_url)}" class="avatar ${sizeClass}" alt="Foto de perfil" />`;
@@ -223,7 +262,7 @@ async function goToExecution(treinoId) {
       series: ex.ultimo ? ex.ultimo.series : ex.series_padrao,
       reps: ex.ultimo ? ex.ultimo.reps : ex.reps_padrao,
     }));
-    setState({ screen: "execution", execution: { treino, items } });
+    setState({ screen: "execution", execution: { treino, items, infoExpandedId: null } });
   } catch (e) {
     showToast(e.message, true);
     goToList();
@@ -430,6 +469,16 @@ function execToggle(treinoExercicioId) {
     it.treino_exercicio_id === treinoExercicioId ? { ...it, selected: !it.selected } : it
   );
   setState({ execution: { ...state.execution, items } });
+}
+
+function toggleExercicioInfo(treinoExercicioId) {
+  const atual = state.execution.infoExpandedId;
+  setState({
+    execution: {
+      ...state.execution,
+      infoExpandedId: atual === treinoExercicioId ? null : treinoExercicioId,
+    },
+  });
 }
 
 function execStep(treinoExercicioId, field, delta, min) {
@@ -769,16 +818,31 @@ function renderExecution() {
         ? `Última vez: ${pesoLabel(it.ultimo.peso)} · ${it.ultimo.series}x${it.ultimo.reps}`
         : `Padrão: ${pesoLabel(it.carga_padrao)} · ${it.series_padrao}x${it.reps_padrao}`;
 
+      const info = exercicioInfo(it.nome);
+      const infoPanel =
+        ex.infoExpandedId === it.treino_exercicio_id
+          ? `
+        <div class="exec-info-panel">
+          ${info ? `<img src="/images/exercicios/${info.padrao}.svg" alt="" />` : ""}
+          <div class="dica">${info ? esc(info.dica) : "Ainda não tenho uma dica de execução cadastrada pra esse exercício."}</div>
+        </div>`
+          : "";
+
       return `
         <div class="exec-card ${it.selected ? "selected" : ""}">
-          <button class="exec-card-head" onclick="execToggle(${it.treino_exercicio_id})">
-            <div class="thumb sm"><img src="${IMAGEM_GENERICA}" alt="" /></div>
-            <div class="ex-info">
-              <div class="ex-name">${esc(it.nome)}</div>
-              <div class="ex-sub">${esc(lastInfo)}</div>
-            </div>
-            <div class="check ${it.selected ? "on" : ""}">✓</div>
-          </button>
+          <div class="exec-card-head">
+            <button class="exec-thumb-name" onclick="toggleExercicioInfo(${it.treino_exercicio_id})">
+              <div class="thumb sm"><img src="${IMAGEM_GENERICA}" alt="" /></div>
+              <div class="ex-info">
+                <div class="ex-name">${esc(it.nome)}</div>
+                <div class="ex-sub">${esc(lastInfo)}</div>
+              </div>
+            </button>
+            <button class="check-toggle" onclick="execToggle(${it.treino_exercicio_id})" aria-label="Selecionar">
+              <div class="check ${it.selected ? "on" : ""}">✓</div>
+            </button>
+          </div>
+          ${infoPanel}
           ${detail}
         </div>`;
     })

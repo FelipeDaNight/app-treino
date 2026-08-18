@@ -1,0 +1,7 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="35" width="40" height="10" rx="4" fill="#ff7a30"/>
+  <line x1="55" y1="40" x2="55" y2="65" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <line x1="55" y1="65" x2="80" y2="65" stroke="#ff7a30" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 78 63 Q 82 45 68 35" stroke="#ff7a30" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="2 6" opacity="0.85"/>
+  <polygon points="65,32 76,32 70,42" fill="#ff7a30"/>
+</svg>
