@@ -1,4 +1,4 @@
-const CACHE_NAME = "app-de-treino-v2";
+const CACHE_NAME = "app-de-treino-v3";
 const SHELL_ASSETS = [
   "/",
   "/index.html",
@@ -6,8 +6,8 @@ const SHELL_ASSETS = [
   "/js/api.js",
   "/js/app.js",
   "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
+  "/icons/icon-192-v2.png",
+  "/icons/icon-512-v2.png",
 ];
 
 self.addEventListener("install", (event) => {
