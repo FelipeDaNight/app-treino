@@ -2,6 +2,7 @@ import os
 import secrets
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -40,5 +41,18 @@ app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 FRONTEND_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend"
 )
+
+
+@app.get("/sw.js")
+def service_worker():
+    # Nunca deixa nenhum cache (navegador, CDN) guardar o service worker —
+    # sem isso o navegador pode demorar a perceber que existe uma versão nova.
+    return FileResponse(
+        os.path.join(FRONTEND_DIR, "sw.js"),
+        media_type="text/javascript",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+
+
 if os.path.isdir(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

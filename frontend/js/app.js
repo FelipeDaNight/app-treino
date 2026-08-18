@@ -1103,7 +1103,17 @@ function render() {
 boot();
 
 if ("serviceWorker" in navigator) {
+  // Só recarrega em troca de controller se já existia um antes — a primeira
+  // ativação (usuário novo, sem service worker prévio) não precisa recarregar,
+  // a página já carregou fresca da rede.
+  const jaTinhaController = !!navigator.serviceWorker.controller;
+  let jaRecarregou = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!jaTinhaController || jaRecarregou) return;
+    jaRecarregou = true;
+    window.location.reload();
+  });
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
   });
 }
