@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .. import models, schemas
 from ..auth import get_current_user
@@ -9,38 +9,41 @@ from ..database import get_db
 router = APIRouter(prefix="/api/treinos", tags=["treinos"])
 
 
-def _ultima_data_treino(db: Session, treino_id: int):
-    return (
-        db.query(func.max(models.RegistroCarga.data))
-        .filter(models.RegistroCarga.treino_id == treino_id)
-        .scalar()
-    )
-
-
-def _ultimo_valor_exercicio(db: Session, treino_id: int, exercicio_id: int):
-    row = (
-        db.query(models.RegistroCarga)
-        .filter(
-            models.RegistroCarga.treino_id == treino_id,
-            models.RegistroCarga.exercicio_id == exercicio_id,
-        )
-        .order_by(models.RegistroCarga.data.desc(), models.RegistroCarga.criado_em.desc())
-        .first()
-    )
-    if not row:
-        return None
-    return schemas.UltimoValor(peso=row.peso, series=row.series, reps=row.reps, data=row.data)
-
-
 def _obter_treino_do_usuario(db: Session, treino_id: int, usuario_id: int) -> models.Treino:
     treino = (
         db.query(models.Treino)
+        .options(
+            joinedload(models.Treino.exercicios).joinedload(models.TreinoExercicio.exercicio)
+        )
         .filter(models.Treino.id == treino_id, models.Treino.usuario_id == usuario_id)
         .first()
     )
     if not treino:
         raise HTTPException(404, "Treino não encontrado")
     return treino
+
+
+def _ultimos_valores_por_exercicio(
+    db: Session, treino_id: int, exercicio_ids: list[int]
+) -> dict[int, schemas.UltimoValor]:
+    if not exercicio_ids:
+        return {}
+    rows = (
+        db.query(models.RegistroCarga)
+        .filter(
+            models.RegistroCarga.treino_id == treino_id,
+            models.RegistroCarga.exercicio_id.in_(exercicio_ids),
+        )
+        .order_by(models.RegistroCarga.data.desc(), models.RegistroCarga.criado_em.desc())
+        .all()
+    )
+    resultado: dict[int, schemas.UltimoValor] = {}
+    for row in rows:
+        if row.exercicio_id not in resultado:
+            resultado[row.exercicio_id] = schemas.UltimoValor(
+                peso=row.peso, series=row.series, reps=row.reps, data=row.data
+            )
+    return resultado
 
 
 @router.get("", response_model=list[schemas.TreinoSummary])
@@ -53,20 +56,33 @@ def listar_treinos(
         .order_by(models.Treino.ordem, models.Treino.id)
         .all()
     )
-    out = []
-    for t in treinos:
-        out.append(
-            schemas.TreinoSummary(
-                id=t.id,
-                nome=t.nome,
-                categoria=t.categoria,
-                tipo=t.tipo,
-                duracao_min=t.duracao_min,
-                total_exercicios=len(t.exercicios),
-                ultima_data=_ultima_data_treino(db, t.id),
-            )
+    treino_ids = [t.id for t in treinos]
+
+    contagens = dict(
+        db.query(models.TreinoExercicio.treino_id, func.count(models.TreinoExercicio.id))
+        .filter(models.TreinoExercicio.treino_id.in_(treino_ids))
+        .group_by(models.TreinoExercicio.treino_id)
+        .all()
+    )
+    ultimas_datas = dict(
+        db.query(models.RegistroCarga.treino_id, func.max(models.RegistroCarga.data))
+        .filter(models.RegistroCarga.treino_id.in_(treino_ids))
+        .group_by(models.RegistroCarga.treino_id)
+        .all()
+    )
+
+    return [
+        schemas.TreinoSummary(
+            id=t.id,
+            nome=t.nome,
+            categoria=t.categoria,
+            tipo=t.tipo,
+            duracao_min=t.duracao_min,
+            total_exercicios=contagens.get(t.id, 0),
+            ultima_data=ultimas_datas.get(t.id),
         )
-    return out
+        for t in treinos
+    ]
 
 
 @router.post("", response_model=schemas.TreinoDetail, status_code=201)
@@ -97,16 +113,16 @@ def criar_treino(
     db.flush()
 
     for i, item in enumerate(payload.exercicios):
-        nome = item.nome.strip()
-        if not nome:
+        nome_exercicio = item.nome.strip()
+        if not nome_exercicio:
             continue
         exercicio = (
             db.query(models.Exercicio)
-            .filter(func.lower(models.Exercicio.nome) == nome.lower())
+            .filter(func.lower(models.Exercicio.nome) == nome_exercicio.lower())
             .first()
         )
         if not exercicio:
-            exercicio = models.Exercicio(nome=nome)
+            exercicio = models.Exercicio(nome=nome_exercicio)
             db.add(exercicio)
             db.flush()
         db.add(
@@ -121,26 +137,34 @@ def criar_treino(
         )
 
     db.commit()
-    db.refresh(treino)
-    return _treino_detail(db, treino)
+    return _treino_detail(db, _obter_treino_do_usuario(db, treino.id, usuario.id))
 
 
 def _treino_detail(db: Session, treino: models.Treino) -> schemas.TreinoDetail:
-    exercicios = []
-    for link in sorted(treino.exercicios, key=lambda l: l.ordem):
-        exercicios.append(
-            schemas.TreinoExercicioOut(
-                treino_exercicio_id=link.id,
-                exercicio_id=link.exercicio_id,
-                nome=link.exercicio.nome,
-                imagem_url=link.exercicio.imagem_url,
-                ordem=link.ordem,
-                series_padrao=link.series_padrao,
-                reps_padrao=link.reps_padrao,
-                carga_padrao=link.carga_padrao,
-                ultimo=_ultimo_valor_exercicio(db, treino.id, link.exercicio_id),
-            )
+    links = sorted(treino.exercicios, key=lambda l: l.ordem)
+    ultimos = _ultimos_valores_por_exercicio(db, treino.id, [link.exercicio_id for link in links])
+
+    exercicios = [
+        schemas.TreinoExercicioOut(
+            treino_exercicio_id=link.id,
+            exercicio_id=link.exercicio_id,
+            nome=link.exercicio.nome,
+            imagem_url=link.exercicio.imagem_url,
+            ordem=link.ordem,
+            series_padrao=link.series_padrao,
+            reps_padrao=link.reps_padrao,
+            carga_padrao=link.carga_padrao,
+            ultimo=ultimos.get(link.exercicio_id),
         )
+        for link in links
+    ]
+
+    ultima_data = (
+        db.query(func.max(models.RegistroCarga.data))
+        .filter(models.RegistroCarga.treino_id == treino.id)
+        .scalar()
+    )
+
     return schemas.TreinoDetail(
         id=treino.id,
         nome=treino.nome,
@@ -148,7 +172,7 @@ def _treino_detail(db: Session, treino: models.Treino) -> schemas.TreinoDetail:
         tipo=treino.tipo,
         duracao_min=treino.duracao_min,
         exercicios=exercicios,
-        ultima_data=_ultima_data_treino(db, treino.id),
+        ultima_data=ultima_data,
     )
 
 

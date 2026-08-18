@@ -67,6 +67,14 @@ body::after {
 
 @media (prefers-reduced-motion: reduce) {
   body::before, body::after { animation: none; }
+  .screen, .toast { animation: none; }
+  button, .chip, .workout-card, .cal-cell:not(.blank), .avatar-btn, .avatar-upload {
+    transition: none;
+  }
+  button:active:not(:disabled), .chip:active, .workout-card:active,
+  .cal-cell:active:not(.blank), .avatar-btn:active, .avatar-upload:active {
+    transform: none;
+  }
 }
 
 button, input {
@@ -351,10 +359,53 @@ button, input {
   background: var(--surface); border: 1px solid var(--border); color: var(--text);
   padding: 12px 18px; border-radius: 100px; font-size: 13px; font-weight: 600;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 1000; max-width: 90%; text-align: center;
+  animation: toast-in 0.25s ease-out;
 }
 .toast.error { border-color: var(--border-danger); color: var(--danger); }
 
+@keyframes toast-in {
+  from { transform: translate(-50%, 12px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
 .loading-note { padding: 40px 20px; text-align: center; color: var(--text-dimmer); font-size: 14px; }
+
+.spinner {
+  width: 28px; height: 28px; margin: 0 auto;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- transições e feedback de toque ---- */
+
+.screen { animation: screen-fade-in 0.22s ease-out; }
+
+@keyframes screen-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+button,
+.chip,
+.workout-card,
+.cal-cell:not(.blank),
+.avatar-btn,
+.avatar-upload {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+button:active:not(:disabled),
+.chip:active,
+.workout-card:active,
+.cal-cell:active:not(.blank),
+.avatar-btn:active,
+.avatar-upload:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
 
 /* ---- avatar / perfil ---- */
 

@@ -63,7 +63,7 @@ class TreinoExercicio(Base):
     __tablename__ = "treino_exercicios"
 
     id = Column(Integer, primary_key=True)
-    treino_id = Column(Integer, ForeignKey("treinos.id"), nullable=False)
+    treino_id = Column(Integer, ForeignKey("treinos.id"), nullable=False, index=True)
     exercicio_id = Column(Integer, ForeignKey("exercicios.id"), nullable=False)
     ordem = Column(Integer, default=0)
     series_padrao = Column(Integer, default=3)
@@ -81,8 +81,8 @@ class RegistroCarga(Base):
 
     id = Column(Integer, primary_key=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False, index=True)
-    treino_id = Column(Integer, ForeignKey("treinos.id"), nullable=False)
-    exercicio_id = Column(Integer, ForeignKey("exercicios.id"), nullable=True)
+    treino_id = Column(Integer, ForeignKey("treinos.id"), nullable=False, index=True)
+    exercicio_id = Column(Integer, ForeignKey("exercicios.id"), nullable=True, index=True)
     sessao_id = Column(String, nullable=True, index=True)
     data = Column(Date, nullable=False, index=True)
     peso = Column(Float, nullable=True)

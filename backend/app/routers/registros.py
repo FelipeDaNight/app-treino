@@ -4,7 +4,7 @@ from collections import OrderedDict
 from datetime import date
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .. import models, schemas
 from ..auth import get_current_user
@@ -135,6 +135,7 @@ def registros_do_dia(
 ):
     rows = (
         db.query(models.RegistroCarga)
+        .options(joinedload(models.RegistroCarga.treino), joinedload(models.RegistroCarga.exercicio))
         .filter(models.RegistroCarga.usuario_id == usuario.id, models.RegistroCarga.data == data)
         .order_by(models.RegistroCarga.criado_em, models.RegistroCarga.id)
         .all()

@@ -21,3 +21,26 @@ def rodar_migracoes(engine: Engine) -> None:
     if not _tem_coluna(engine, "registros_carga", "foto_url"):
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE registros_carga ADD COLUMN foto_url VARCHAR"))
+
+    # Índices que faltavam nas colunas mais consultadas do app (adicionados
+    # depois que o banco já existia — CREATE INDEX IF NOT EXISTS é seguro
+    # de rodar de novo).
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_treino_exercicios_treino_id "
+                "ON treino_exercicios (treino_id)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_registros_carga_treino_id "
+                "ON registros_carga (treino_id)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_registros_carga_exercicio_id "
+                "ON registros_carga (exercicio_id)"
+            )
+        )

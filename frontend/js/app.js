@@ -132,6 +132,27 @@ function avatarHtml(usuario, sizeClass) {
   return `<div class="avatar avatar-placeholder ${sizeClass}">${esc(inicial)}</div>`;
 }
 
+function stepperHtml({
+  label, value, onDec, onInc,
+  btnClass = "", valueClass = "", tight = false,
+  wrapperClass = "stepper-block", labelClass = "stepper-label", stepperExtraClass = "",
+}) {
+  const btnClasses = `stepper-btn${btnClass ? " " + btnClass : ""}`;
+  return `
+    <div class="${wrapperClass}">
+      <div class="${labelClass}">${esc(label)}</div>
+      <div class="stepper${tight ? " tight" : ""}${stepperExtraClass ? " " + stepperExtraClass : ""}">
+        <button class="${btnClasses}" onclick="${onDec}">−</button>
+        <div class="stepper-value${valueClass ? " " + valueClass : ""}">${value}</div>
+        <button class="${btnClasses} plus" onclick="${onInc}">+</button>
+      </div>
+    </div>`;
+}
+
+function stepperPairHtml(a, b) {
+  return `<div class="stepper-row-pair">${stepperHtml(a)}${stepperHtml(b)}</div>`;
+}
+
 function fotoSessaoPickerHtml({ fotoUrl, fotoUploading, onSelect, onRemove }) {
   if (fotoUploading) {
     return `<div class="foto-sessao-picker"><div class="foto-sessao-uploading">Enviando foto…</div></div>`;
@@ -778,32 +799,16 @@ function renderCreate() {
       <div class="inline-add-form">
         <div class="admin-form-title">Novo exercício</div>
         <input id="new-ex-nome" class="text-input" placeholder="Nome do exercício" value="${esc(d.newEx.nome)}" oninput="state.createDraft.newEx.nome = this.value" />
-        <div class="stepper-block">
-          <div class="stepper-label">Carga padrão (kg)</div>
-          <div class="stepper">
-            <button class="stepper-btn on-surface" onclick="createStepNewEx('carga',-2.5,0)">−</button>
-            <div class="stepper-value">${d.newEx.carga}</div>
-            <button class="stepper-btn on-surface plus" onclick="createStepNewEx('carga',2.5,0)">+</button>
-          </div>
-        </div>
-        <div class="stepper-row-pair">
-          <div>
-            <div class="stepper-label">Séries</div>
-            <div class="stepper tight">
-              <button class="stepper-btn xs on-surface" onclick="createStepNewEx('series',-1,1)">−</button>
-              <div class="stepper-value sm">${d.newEx.series}</div>
-              <button class="stepper-btn xs on-surface plus" onclick="createStepNewEx('series',1,1)">+</button>
-            </div>
-          </div>
-          <div>
-            <div class="stepper-label">Reps</div>
-            <div class="stepper tight">
-              <button class="stepper-btn xs on-surface" onclick="createStepNewEx('reps',-1,1)">−</button>
-              <div class="stepper-value sm">${d.newEx.reps}</div>
-              <button class="stepper-btn xs on-surface plus" onclick="createStepNewEx('reps',1,1)">+</button>
-            </div>
-          </div>
-        </div>
+        ${stepperHtml({
+          label: "Carga padrão (kg)", value: d.newEx.carga, btnClass: "on-surface",
+          onDec: "createStepNewEx('carga',-2.5,0)", onInc: "createStepNewEx('carga',2.5,0)",
+        })}
+        ${stepperPairHtml(
+          { label: "Séries", value: d.newEx.series, btnClass: "xs on-surface", valueClass: "sm", tight: true,
+            onDec: "createStepNewEx('series',-1,1)", onInc: "createStepNewEx('series',1,1)" },
+          { label: "Reps", value: d.newEx.reps, btnClass: "xs on-surface", valueClass: "sm", tight: true,
+            onDec: "createStepNewEx('reps',-1,1)", onInc: "createStepNewEx('reps',1,1)" }
+        )}
         <button class="btn-primary" onclick="createConfirmAddExercicio()">Adicionar à lista</button>
       </div>`
     : "";
@@ -848,32 +853,17 @@ function renderExecution() {
       const detail = it.selected
         ? `
         <div class="exec-detail">
-          <div class="stepper-block">
-            <div class="stepper-label">Peso usado (kg)</div>
-            <div class="stepper">
-              <button class="stepper-btn" onclick="execStep(${it.treino_exercicio_id},'peso',-2.5,0)">−</button>
-              <div class="stepper-value">${it.peso}</div>
-              <button class="stepper-btn plus" onclick="execStep(${it.treino_exercicio_id},'peso',2.5,0)">+</button>
-            </div>
-          </div>
-          <div class="stepper-row-pair">
-            <div>
-              <div class="stepper-label">Séries</div>
-              <div class="stepper tight">
-                <button class="stepper-btn small" onclick="execStep(${it.treino_exercicio_id},'series',-1,1)">−</button>
-                <div class="stepper-value md">${it.series}</div>
-                <button class="stepper-btn small plus" onclick="execStep(${it.treino_exercicio_id},'series',1,1)">+</button>
-              </div>
-            </div>
-            <div>
-              <div class="stepper-label">Reps</div>
-              <div class="stepper tight">
-                <button class="stepper-btn small" onclick="execStep(${it.treino_exercicio_id},'reps',-1,1)">−</button>
-                <div class="stepper-value md">${it.reps}</div>
-                <button class="stepper-btn small plus" onclick="execStep(${it.treino_exercicio_id},'reps',1,1)">+</button>
-              </div>
-            </div>
-          </div>
+          ${stepperHtml({
+            label: "Peso usado (kg)", value: it.peso,
+            onDec: `execStep(${it.treino_exercicio_id},'peso',-2.5,0)`,
+            onInc: `execStep(${it.treino_exercicio_id},'peso',2.5,0)`,
+          })}
+          ${stepperPairHtml(
+            { label: "Séries", value: it.series, btnClass: "small", valueClass: "md", tight: true,
+              onDec: `execStep(${it.treino_exercicio_id},'series',-1,1)`, onInc: `execStep(${it.treino_exercicio_id},'series',1,1)` },
+            { label: "Reps", value: it.reps, btnClass: "small", valueClass: "md", tight: true,
+              onDec: `execStep(${it.treino_exercicio_id},'reps',-1,1)`, onInc: `execStep(${it.treino_exercicio_id},'reps',1,1)` }
+          )}
         </div>`
         : "";
 
@@ -957,22 +947,14 @@ function renderRunExecution() {
           <div class="label">Última corrida</div>
           <div class="value">${esc(lastInfo)}</div>
         </div>
-        <div class="field">
-          <div class="field-label">Distância (km)</div>
-          <div class="stepper run-stepper">
-            <button class="stepper-btn" onclick="runStep('distancia_km',-0.5,0)">−</button>
-            <div class="stepper-value">${r.distancia_km}</div>
-            <button class="stepper-btn plus" onclick="runStep('distancia_km',0.5,0)">+</button>
-          </div>
-        </div>
-        <div class="field">
-          <div class="field-label">Tempo (min)</div>
-          <div class="stepper run-stepper">
-            <button class="stepper-btn" onclick="runStep('tempo_min',-1,0)">−</button>
-            <div class="stepper-value">${r.tempo_min}</div>
-            <button class="stepper-btn plus" onclick="runStep('tempo_min',1,0)">+</button>
-          </div>
-        </div>
+        ${stepperHtml({
+          label: "Distância (km)", value: r.distancia_km, wrapperClass: "field", labelClass: "field-label", stepperExtraClass: "run-stepper",
+          onDec: "runStep('distancia_km',-0.5,0)", onInc: "runStep('distancia_km',0.5,0)",
+        })}
+        ${stepperHtml({
+          label: "Tempo (min)", value: r.tempo_min, wrapperClass: "field", labelClass: "field-label", stepperExtraClass: "run-stepper",
+          onDec: "runStep('tempo_min',-1,0)", onInc: "runStep('tempo_min',1,0)",
+        })}
         ${fotoSessaoPickerHtml({
           fotoUrl: r.fotoUrl,
           fotoUploading: r.fotoUploading,
@@ -1123,32 +1105,16 @@ function renderAdmin() {
         <div class="inline-add-form">
           <div class="admin-form-title">Novo exercício</div>
           <input id="admin-new-nome" class="text-input" placeholder="Nome do exercício" value="${esc(a.addNome || "")}" oninput="state.admin.addNome = this.value" />
-          <div class="stepper-block">
-            <div class="stepper-label">Peso padrão (kg)</div>
-            <div class="stepper">
-              <button class="stepper-btn on-surface" onclick="adminStep('addCarga',-2.5,0)">−</button>
-              <div class="stepper-value">${a.addCarga}</div>
-              <button class="stepper-btn on-surface plus" onclick="adminStep('addCarga',2.5,0)">+</button>
-            </div>
-          </div>
-          <div class="stepper-row-pair">
-            <div>
-              <div class="stepper-label">Séries</div>
-              <div class="stepper tight">
-                <button class="stepper-btn xs on-surface" onclick="adminStep('addSeries',-1,1)">−</button>
-                <div class="stepper-value sm">${a.addSeries}</div>
-                <button class="stepper-btn xs on-surface plus" onclick="adminStep('addSeries',1,1)">+</button>
-              </div>
-            </div>
-            <div>
-              <div class="stepper-label">Reps</div>
-              <div class="stepper tight">
-                <button class="stepper-btn xs on-surface" onclick="adminStep('addReps',-1,1)">−</button>
-                <div class="stepper-value sm">${a.addReps}</div>
-                <button class="stepper-btn xs on-surface plus" onclick="adminStep('addReps',1,1)">+</button>
-              </div>
-            </div>
-          </div>
+          ${stepperHtml({
+            label: "Peso padrão (kg)", value: a.addCarga, btnClass: "on-surface",
+            onDec: "adminStep('addCarga',-2.5,0)", onInc: "adminStep('addCarga',2.5,0)",
+          })}
+          ${stepperPairHtml(
+            { label: "Séries", value: a.addSeries, btnClass: "xs on-surface", valueClass: "sm", tight: true,
+              onDec: "adminStep('addSeries',-1,1)", onInc: "adminStep('addSeries',1,1)" },
+            { label: "Reps", value: a.addReps, btnClass: "xs on-surface", valueClass: "sm", tight: true,
+              onDec: "adminStep('addReps',-1,1)", onInc: "adminStep('addReps',1,1)" }
+          )}
           <button class="btn-primary" onclick="adminAddExercicio()">+ Adicionar exercício</button>
         </div>
       </div>
@@ -1172,7 +1138,7 @@ function render() {
     case "runExecution": html = renderRunExecution(); break;
     case "calendar": html = renderCalendar(); break;
     case "admin": html = renderAdmin(); break;
-    default: html = `<div class="loading-note">Carregando…</div>`;
+    default: html = `<div class="loading-note"><div class="spinner"></div></div>`;
   }
   if (state.toast) {
     html += `<div class="toast ${state.toast.isError ? "error" : ""}">${esc(state.toast.message)}</div>`;
